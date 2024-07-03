@@ -4,15 +4,15 @@ or reduce. the ' [word] operator gives the address of a word and then
 execute executes it )
 : square dup * ;
 
-: map ( op arr -- op arr )
+: map ( op arr -- )
   dup @ 0 u+do
   1 cells + dup @ rot tuck execute rot dup -rot !
-  loop ;
+  loop drop drop ;
 
-: reduce ( op arr -- op arr )
+: reduce ( op arr -- num )
   dup @ swap 1 cells + dup @ rot 1 u+do
   swap 1 cells + dup @ 2swap -rot 2tuck execute 2swap nip -rot
-  loop ;
+  loop nip ;
 
 : positive
   0 > ;
@@ -25,5 +25,15 @@ execute executes it )
   else
     -rot
   endif
-  loop swap;
+  loop swap ;
 
+: filter ( op arr2 arr1 -- op arr2 arr1 [arr1 is filtered into arr2, run ccount first to find the correct size for arr2] )
+  dup @ 0 u+do
+  1 cells + swap -rot dup @ rot tuck execute 
+  if
+    -rot dup @ rot 1 cells + tuck ! swap
+  else
+    -rot
+  endif
+  loop
+;
