@@ -37,3 +37,15 @@ execute executes it )
   endif
   loop
 ;
+
+: a_op ( op arr1 arr2 arr3 -- op arr1 arr2 arr3 [element wise operation on a1 and a2 like + so that we get a3[i] = a1[i] op a2[i]] ) 
+  dup @ 0 u+do
+  1 cells + rot 1 cells + rot 1 cells + rot 2swap -rot 2over @ swap @ rot dup 2swap rot execute rot tuck ! -rot swap 2swap
+  loop
+;
+
+( So for multi dimensional arrays we have an array of pointers. But to tell apart the pointer 40459045 from the number 40459045, arrays of pointers will have negative length numbers )
+
+: m_op ( op matrix1 matrix2 matrix3 -- op matrix1 matrix2 matrix3 [operation can be something like addition or subtraction or any element-wise operation, all matrices must have same size] )
+
+;
