@@ -45,7 +45,10 @@ execute executes it )
 ;
 
 ( So for multi dimensional arrays we have an array of pointers. But to tell apart the pointer 40459045 from the number 40459045, arrays of pointers will have negative length numbers )
+( On second thought this is a user-side issue only use matrix functions on matrices and array functions on arrays that's why there are different ones, this is probably better )
 
 : m_op ( op matrix1 matrix2 matrix3 -- op matrix1 matrix2 matrix3 [operation can be something like addition or subtraction or any element-wise operation, all matrices must have same size] )
-
+  dup @ 0 u+do
+  1 cells + rot 1 cells + rot 1 cells + rot 2dup @ swap @ 2rot 2dup @ -rot 2rot 2rot swap 2swap a_op drop drop drop drop swap 2swap
+  loop
 ;
