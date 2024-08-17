@@ -37,4 +37,19 @@ Proof.
   intros a b. induction a. simpl. rewrite add_0. reflexivity.
   simpl. induction b. simpl. rewrite add_0. reflexivity.
   simpl. rewrite -> IHa. simpl. rewrite add_S. reflexivity.
+Qed.
 
+Fixpoint abs_minus (a b : nat) : nat :=
+  match a with
+  | 0 => b
+  | S n => match b with
+           | 0 => a
+           | S m => ( abs_minus n m)
+           end end.
+
+Theorem abs_minus_assoc : forall (a b c : nat),
+  (abs_minus a (abs_minus b c)) = (abs_minus (abs_minus a b) c).
+Proof.
+  intros a b c.
+  induction a. simpl. reflexivity.
+  simpl. 
