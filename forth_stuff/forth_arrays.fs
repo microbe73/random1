@@ -9,10 +9,10 @@ execute executes it )
   1 cells + dup @ rot tuck execute rot dup -rot !
   loop drop drop ;
 
-: reduce ( op arr -- num )
+: reduce ( op arr -- op arr num )
   dup @ swap 1 cells + dup @ rot 1 u+do
   swap 1 cells + dup @ 2swap -rot 2tuck execute 2swap nip -rot
-  loop nip ;
+  loop ;
 
 : positive
   0 > ;

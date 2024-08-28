@@ -23,19 +23,38 @@ variable fh
 
 
 
+( command dispatcher )
 variable offset
-( For any special characters, replace the character [i.e c] with &c;, )
-( this can be modified easily, useful for escaping special characters in the conversion )
+variable 'token
+variable #token
+: addr      offset @ 'src @ + ;
+: chr       addr c@ ;
+: -ws       32 u> ;
+: advance   1 offset +! ;
+: seek      begin chr -ws while advance repeat ;
+: token     addr seek addr over - advance 2dup #token ! 'token ! ;
+: .token    'token @ #token @ type ;
+: error     cr cr .token -1 abort" Command was not found" ;
+: command   token sfind if execute else error then ;
+( convert string to integer )
+: atoi      c@ 48 - .token ;
+( fill up the newly created array with the correct elements )
+: fill      .token drop drop ;
+: array     token drop atoi dup cells allocate throw dup -rot ! token fill ;
+: iw        ." <i>" token type ." </i>" ;
+: bw        ." <b>" token type ." </b>" ;
+
+( process input buffer )
 : entity    [char] & emit type [char] ; emit ;
 : rdrop     postpone r> postpone drop ; immediate
 : call      >r ;
 : ===>      over = if drop r> call entity rdrop exit then rdrop ;
-: either&   [char] & ===> s" amp" ;
+: eitherA   dup [char] A = if drop array rdrop exit then  ;
 : or<       [char] < ===> s" lt" ;
 : or>       [char] > ===> s" gt" ;
-: interpret either& or< or> ( else ) emit ;
-
-: process   0 offset ! begin offset @ #src @ u< while
-            'src @ offset @ + c@ interpret 1 offset +! repeat ;
+: orEsc     dup [char] ~ = if drop command rdrop exit then ;
+: interpret chr advance eitherA orEsc ( else ) emit ;
+: -end      offset @ #src @ u< ;
+: process   0 offset ! begin -end while interpret repeat ;
 
 slurp
