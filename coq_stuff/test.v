@@ -46,10 +46,11 @@ Fixpoint abs_minus (a b : nat) : nat :=
            | 0 => a
            | S m => ( abs_minus n m)
            end end.
-
+(*
 Theorem abs_minus_assoc : forall (a b c : nat),
   (abs_minus a (abs_minus b c)) = (abs_minus (abs_minus a b) c).
 Proof.
   intros a b c.
   induction a. simpl. reflexivity.
   simpl. 
+*)

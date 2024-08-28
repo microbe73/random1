@@ -52,3 +52,6 @@ execute executes it )
   1 cells + rot 1 cells + rot 1 cells + rot 2dup @ swap @ 2rot 2dup @ -rot 2rot 2rot swap 2swap a_op drop drop drop drop swap 2swap
   loop
 ;
+
+: switch ( add1 add2 -- add1 add2 ) dup
+;
