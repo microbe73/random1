@@ -3,7 +3,7 @@
 ( essentially create a programming language )
 empty
 
-: srcfile   s" a.txt" ;
+: srcfile   s" c.txt" ;
 
 ( buffer for reading )
 variable 'src
@@ -30,17 +30,26 @@ variable #token
 : addr      offset @ 'src @ + ;
 : chr       addr c@ ;
 : -ws       32 u> ;
+: -,        44 <> ;
 : advance   1 offset +! ;
 : seek      begin chr -ws while advance repeat ;
+: cseek     begin chr -, while advance repeat ;
+: ctoken    addr cseek addr over - advance ;
 : token     addr seek addr over - advance 2dup #token ! 'token ! ;
 : .token    'token @ #token @ type ;
 : error     cr cr .token -1 abort" Command was not found" ;
 : command   token sfind if execute else error then ;
-( convert string to integer )
-: atoi      c@ 48 - .token ;
+: 10^       1 swap 0 u+do 10 * loop ;
+
+( convert string to integer: takes addr len -- num)
+: ctoi      c@ 48 - ;
+
+: atoi      dup 1 - 10^ swap 0 swap 0 u+do >r swap dup ctoi rot 2dup *
+            -rot nip 10 / swap r> + rot 1 + -rot loop nip nip ;
+
 ( fill up the newly created array with the correct elements )
-: fill      .token drop drop ;
-: array     token drop atoi dup cells allocate throw dup -rot ! token fill ;
+: fill      dup @ 0 u+do dup 1 i + cells + ctoken atoi swap ! loop ;
+: array     token atoi dup 1 + cells allocate throw dup -rot ! fill ;
 : iw        ." <i>" token type ." </i>" ;
 : bw        ." <b>" token type ." </b>" ;
 
