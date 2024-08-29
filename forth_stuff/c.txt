@@ -1,1 +1,1 @@
-Yet another array file, now testing an actual language feature A5 24235,11,73,69,124214124, other text A5 4,7,5,9,11, more text A5 0,0,0,0,0, more text ~a_op hopefully this works
+A5 24235,11,73,69,124214124, A5 4,7,5,9,11, A5 0,0,0,0,0, ~a_op
