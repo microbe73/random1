@@ -39,18 +39,21 @@ Proof.
   simpl. rewrite -> IHa. simpl. rewrite add_S. reflexivity.
 Qed.
 
-Fixpoint abs_minus (a b : nat) : nat :=
+Fixpoint gt (a b : nat) : bool :=
   match a with
-  | 0 => b
+  | 0 => false
   | S n => match b with
-           | 0 => a
-           | S m => ( abs_minus n m)
+           | 0 => true
+           | S m => ( gt n m)
            end end.
-(*
-Theorem abs_minus_assoc : forall (a b c : nat),
-  (abs_minus a (abs_minus b c)) = (abs_minus (abs_minus a b) c).
+
+Theorem preservative : forall (a b : nat),
+  gt a b = true -> gt (S a) (S b) = true.
 Proof.
-  intros a b c.
-  induction a. simpl. reflexivity.
-  simpl. 
-*)
+  intros a b. induction b. firstorder. simpl.  firstorder.
+Qed.
+Theorem gt_transitive : forall (a b c : nat), 
+  gt a b = true /\ gt b c = true -> gt a c = true.
+Proof.
+  intros a b c. firstorder. induction c. destruct a. apply H. simpl. reflexivity.
+  destruct a. apply H. simpl. induction c. 
