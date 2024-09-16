@@ -55,5 +55,5 @@ Qed.
 Theorem gt_transitive : forall (a b c : nat), 
   gt a b = true /\ gt b c = true -> gt a c = true.
 Proof.
-  intros a b c. firstorder. induction c. destruct a. apply H. simpl. reflexivity.
-  destruct a. apply H. simpl. induction c. 
+  intros a b c. firstorder. induction c. destruct a. apply H. 
+  simpl. reflexivity. destruct a. apply H. simpl. induction c. 

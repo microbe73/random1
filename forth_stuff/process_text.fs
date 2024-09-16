@@ -1,4 +1,4 @@
-( Approximately following https://www.youtube.com/watch?v=mvrE2ZGe-rs )
+( https://www.youtube.com/watch?v=mvrE2ZGe-rs )
 ( the vision is that I combine this stuff with the array words in order to )
 ( essentially create a programming language )
 empty
@@ -67,3 +67,6 @@ variable #token
 : process   0 offset ! begin -end while interpret repeat ;
 
 slurp
+( hello world )
+( hello world )
+( a comment )( some other text )
