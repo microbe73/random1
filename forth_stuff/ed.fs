@@ -20,18 +20,32 @@ bfill
 open
 lcount
 create fmem num-lines @ cells allot
-0 0 fh @ reposition-file throw
+: clean 0 0 fh @ reposition-file throw ;
+clean
 
 : l-load  here line-buffer here 256 allot 256 cmove swap cells fmem + ! ;
-: f-load  num-lines @ 0 u+do line-buffer max-line fh @ read-line throw nip i l-load
-          drop bfill loop ;
+
+: f-load  bfill num-lines @ 0 u+do line-buffer max-line fh @ read-line throw nip i 
+          l-load drop bfill loop ;
 f-load
+close
 
-
-: clean   0 0 fh @ reposition-file throw fill ; ( Reset file handler to beginning )
 ( print entire file to stdout )
 : ,p      num-lines @ 0 u+do fmem i cells + @ 255 type 10 emit loop  ;
-( line_num c-addr u -- )
-: a       rot 0 u+do line-buffer max-line fh @ read-line throw  loop
-          fh @ write-file clean ;
- 
+
+( line_num c-addr u -- ) ( replace line with other text )
+: in      bfill rot 1 - cells fmem + -rot line-buffer swap cmove
+          here line-buffer here 256 allot 256 cmove swap ! ;
+
+
+( start-line end-line )
+: p       swap 1 - u+do fmem i cells + @ 255 type 10 emit loop ;
+
+( line-addr )
+: s-line  dup c@ if begin dup 1 fh @ write-file throw 1 + dup c@ 0= until endif ;
+
+create newl 1 cells allot
+10 newl !
+open
+: w       clean num-lines @ 0 u+do fmem i cells + @ s-line drop newl 1 fh @ write-file
+          throw loop ;
