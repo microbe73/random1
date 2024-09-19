@@ -8,7 +8,7 @@ Create line-buffer max-line 2 + allot
 : bfill   256 0 u+do line-buffer i + 0 swap ! loop ;
 bfill
 
-: f       s" process_text.fs" ;
+: f       s" ed.fs" ;
 0 num-lines !
 
 
@@ -47,5 +47,27 @@ close
 create newl 1 cells allot
 10 newl !
 open
-: w       clean num-lines @ 0 u+do fmem i cells + @ s-line drop newl 1 fh @ write-file
-          throw loop ;
+( save and quit [there is no reason to save and not quit since it won't reload the file into memory] )
+: wq       clean num-lines @ 0 u+do fmem i cells + @ s-line drop newl 1 fh @ write-file
+          throw loop bye ;
+
+( line-num -- c-addr 255 ) ( copy a line )
+: c       1 - cells fmem + @ 255 ;
+( num -- c-addr num ) ( creates a string of n newline characters )
+: nline   here over allot over 0 u+do 10 over i + c! loop swap ;
+( I wrote this code using the editor it felt so cool im literally 1950s IBM superhacker )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+( also inserted the newlines after reloading this code and using it yeaaaaaaaaa )

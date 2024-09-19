@@ -1,5 +1,7 @@
 ( https://www.youtube.com/watch?v=mvrE2ZGe-rs )
-( the goal is to combine this with the array words to )
+
+
+
 ( essentially create a programming language )
 empty
 
@@ -67,3 +69,15 @@ variable #token
 : process   0 offset ! begin -end while interpret repeat ;
 
 slurp
+
+
+slurp
+
+
+end while interpret repeat ;
+
+slurp
+
+
+slurp
+
