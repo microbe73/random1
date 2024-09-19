@@ -52,6 +52,28 @@ Theorem preservative : forall (a b : nat),
 Proof.
   intros a b. induction b. firstorder. simpl.  firstorder.
 Qed.
+Theorem gt_0 : forall (a : nat),
+  gt a 0 = false -> a = 0.
+Proof.
+  intros a. destruct a. simpl. reflexivity. simpl. firstorder. discriminate.
+Qed.
+Theorem trichotomy_0 : forall (b : nat),
+  gt b b = false.
+Proof.
+  intro b. induction b. simpl. reflexivity. simpl. apply IHb.
+Qed.
+Theorem trichotomy_1 : forall (a b : nat),
+  a = b -> gt a b = false /\ gt b a = false.
+Proof.
+  intros a b. firstorder. induction a. simpl. reflexivity. rewrite H. apply trichotomy_0.
+  rewrite H. apply trichotomy_0.
+Qed.
+Theorem trichotomy_2 : forall (a b : nat),
+  gt a b = false -> gt b a = true \/ a = b.
+Proof.
+  intros a b. induction a. firstorder. destruct b. simpl. firstorder. simpl. firstorder.
+  destruct b. simpl. discriminate. simpl. 
+
 Theorem gt_transitive : forall (a b c : nat), 
   gt a b = true /\ gt b c = true -> gt a c = true.
 Proof.
