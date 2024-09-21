@@ -70,14 +70,3 @@ variable #token
 
 slurp
 
-
-slurp
-
-
-end while interpret repeat ;
-
-slurp
-
-
-slurp
-
