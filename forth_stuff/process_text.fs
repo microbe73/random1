@@ -68,5 +68,6 @@ variable #token
 : -end      offset @ #src @ u< ;
 : process   0 offset ! begin -end while interpret repeat ;
 
-slurp
+slurp ( load file into memory )
+
 
