@@ -67,12 +67,18 @@ create newl 1 cells allot
 ( I don't think it broke )
 ( c-addr1 u1 c-addr2 u2 start-line end-line -- [replace string 2 with string 1 on all lines in a range] )
 : srmul  { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr buffer2 255 i in loop ;
-( do re mi fa so lol )
-( lol lol lol na )
+: sc { c1 u1 line-num } 0 begin line-num addify @ over + u1 c1 u1 compare
+0= if line-num . dup . 59 emit endif 1 + dup 255 >= until drop ;
 ( lul lol lol )
-( adding a new comment hehe )
-
+( c1 u1 line-start line-end )
+: scmul swap 1 + u+do 2dup i sc loop drop drop ;
 ( also inserted the newlines after reloading this code and using nline which I wrote in this editor yeaaaaaaaaa )
+: gl 1 num-lines @ ;
+
+
+
+
+
 
 
 
