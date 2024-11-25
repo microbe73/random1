@@ -14,7 +14,8 @@ Qed.
 
 Theorem add_0 : forall (a : nat ),
   (add a 0) = a.
-  intros a. induction a. simpl. reflexivity.
+Proof.
+intros a. induction a. simpl. reflexivity.
 simpl. rewrite -> IHa. reflexivity.
 Qed.
 
@@ -38,6 +39,8 @@ Proof.
   simpl. induction b. simpl. rewrite add_0. reflexivity.
   simpl. rewrite -> IHa. simpl. rewrite add_S. reflexivity.
 Qed.
+
+
 
 Fixpoint gt (a b : nat) : bool :=
   match a with

@@ -1,11 +1,17 @@
 ( Editor Variables )
 variable fh
-variable curr-line
+variable curr-line ( struct pointer, @ needed to get struct  )
 variable num-lines
 variable fmem
+variable fhead
 256 Constant max-line
 create line-buffer max-line 2 + allot
 create buffer2 max-line 2 + allot
+begin-structure linelist ( -- u )
+        field: linelist-next ( intlist -- addr1 ) ( struct pointer )
+        field: linelist-line  ( intlist -- addr2 )
+end-structure
+
 
 : bfill   256 0 u+do line-buffer i + 0 swap ! loop ;
 : b2fill  256 0 u+do buffer2 i + 0 swap ! loop ;
@@ -21,16 +27,31 @@ bfill
 : lcount  0 num-lines ! begin line-buffer 256 fh @ read-line throw num-lines @ 1 +
           num-lines ! nip 0= until ;
 
-: l-load  here line-buffer here 256 allot 256 cmove swap cells fmem @ + ! ;
+: l-load  align here line-buffer align here 256 allot 256 cmove curr-line @ linelist-line !
+          linelist allocate throw curr-line @ linelist-next !
+          curr-line @ linelist-next @ curr-line !
+          0 curr-line @ linelist-next ! 0 curr-line @ linelist-line ! ;
+( lets goooo )
+: f-load  bfill num-lines @ 1 u+do line-buffer max-line fh @ read-line throw
+          drop drop l-load bfill loop ( so now line of file is in line-buffer and l-load needs to read it ) ;
+( set curr-line back to start )
+: rcurr   fhead @ curr-line ! ;
+( allocate an instance of linelist for each line )
+: init    open lcount linelist allocate throw fhead ! rcurr clean f-load ;
+
+
+( : l-load  here line-buffer here 256 allot 256 cmove swap cells fmem @ + ! ; 
 
 : f-load  bfill num-lines @  0 u+do line-buffer max-line fh @
-          read-line throw nip i l-load drop bfill loop ;
+          read-line throw nip i l-load drop bfill loop ; 
+: init    open lcount num-lines @ cells allocate throw fmem ! clean f-load ; )
 
-: init    open lcount num-lines @ cells allocate throw fmem ! clean f-load ;
 : deinit  fmem @ free throw close ;
-: addify  1 - cells fmem @ + ;
+( line-num -- linelist-line )
+( gonna assume i didn't save otherwise why does this not work lol )
+: addify  rcurr 1 u+do curr-line @ linelist-next @ curr-line ! loop curr-line @ linelist-line ;
 ( print entire file to stdout )
-: ,p      num-lines @ 0 u+do fmem @ i cells + @ 255 type 10 emit loop  ;
+: ,p      num-lines @ 1 u+do i addify @ 256 type 10 emit loop  ;
 
 ( c-addr u line-num -- ) ( replace line with other text )
 : in      bfill addify -rot line-buffer swap cmove
@@ -74,7 +95,6 @@ create newl 1 cells allot
 : scmul swap 1 + u+do 2dup i sc loop drop drop ;
 ( also inserted the newlines after reloading this code and using nline which I wrote in this editor yeaaaaaaaaa )
 : gl 1 num-lines @ ;
-
 
 
 
