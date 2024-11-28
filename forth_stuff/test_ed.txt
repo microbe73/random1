@@ -1,9 +1,7 @@
-Test file so that I don't break anything important
-while rewriting the editor
-espeically since i'm messing around with memory storage and stuff do not want to break that
-
-
-
-
-here's some more lines just because
-text on the last line to see if it misses this or not
+test file to not break real ones until I know the editor works
+that was hopefully the only issue
+maybe not closing the file was the issue? that def is not good
+I think i just needed to increment num-lines maybe
+possibly it was that cuz im pretty sure that's some bad memory practice
+I'm gonna be on the not closing the file was the issue copium for as long as I can
+yooo did that actually work maybe?
