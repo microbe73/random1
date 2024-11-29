@@ -1,6 +1,8 @@
+this should be the first line now
 test file to not break real ones until I know the editor works
 that was hopefully the only issue
 maybe not closing the file was the issue? that def is not good
+just making sure the copying didnt not work lol
 I think i just needed to increment num-lines maybe
 possibly it was that cuz im pretty sure that's some bad memory practice
 I'm gonna be on the not closing the file was the issue copium for as long as I can
