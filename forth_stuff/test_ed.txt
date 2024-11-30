@@ -1,9 +1,15 @@
+retesting i0 one more time
+and just making sure I did the right thing with i0
 this should be the first line now
 test file to not break real ones until I know the editor works
 that was hopefully the only issue
-maybe not closing the file was the issue? that def is not good
-just making sure the copying didnt not work lol
-I think i just needed to increment num-lines maybe
+maybe not closing the file was the issue?
+just making sure the copying didnt not work
+line numbers are pretty nice I like them
+testing if the new len stuff works on basic features
+it would be nice if it worked ykyk
+it did not look good oops
+but maybe now it looks okay?
 possibly it was that cuz im pretty sure that's some bad memory practice
+speaking of bad memory practice and copium I am also going to be on the having one extra 0 at the end was the issue copium for as long as I can as well
 I'm gonna be on the not closing the file was the issue copium for as long as I can
-yooo did that actually work maybe?

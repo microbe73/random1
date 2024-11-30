@@ -9,12 +9,13 @@ create line-buffer max-line 2 + allot
 create buffer2 max-line 2 + allot
 begin-structure linelist ( -- u )
         field: linelist-next ( intlist -- addr1 ) ( struct pointer )
-        field: linelist-line  ( intlist -- addr2 )
+        field: linelist-line  ( intlist -- addr2 ) ( string pointer [char*[]] )
+        field: linelist-len ( intlist -- addr3 ) ( int pointer )
 end-structure
 
-( todo: Add insertion between lines [ib, ia] by using the linked-list aspect of things )
+( todo: Add line length storing for memory efficiency, then also can avoid using max-line everywhere )
 ( todo: avoid buffer overflows if possible [for functions make sure the line number given is not too large] )
-
+( todo: need to fix the way that sr works [increase/decrease len correctly each time the replacing happens, otherwise it will be BAD] )
 : bfill   max-line 0 u+do line-buffer i + 0 swap ! loop ;
 : b2fill  max-line 0 u+do buffer2 i + 0 swap ! loop ;
 bfill
@@ -29,13 +30,14 @@ bfill
 : lcount  0 num-lines ! begin line-buffer max-line fh @ read-line throw num-lines @ 1 +
           num-lines ! nip 0= until ;
 
-: l-load  align here line-buffer align here max-line allot max-line cmove curr-line @ linelist-line !
-          linelist allocate throw curr-line @ linelist-next !
+( could probably be refactored to not use locals and be shorter, but works for now )
+: l-load  { len } align here line-buffer align here len allot len cmove curr-line @ linelist-line !
+          linelist allocate throw curr-line @ linelist-next ! len curr-line @ linelist-len !
           curr-line @ linelist-next @ curr-line !
-          0 curr-line @ linelist-next ! 0 curr-line @ linelist-line ! ;
+          0 curr-line @ linelist-next ! 0 curr-line @ linelist-line ! 0 curr-line @ linelist-len ! ;
 
 : f-load  bfill num-lines @ 1 u+do line-buffer max-line fh @ read-line throw
-          drop drop l-load bfill loop ;
+          drop 1 + l-load bfill loop ;
 ( set curr-line back to start )
 : rcurr   fhead @ curr-line ! ;
 ( c-addr u -- [load a file into memory] )
@@ -57,26 +59,29 @@ bfill
 : itos    dup get-dig 0 u+do dup get-plc 2dup / itoa mod loop drop ;
 ( []  -- linelist-line [ gets pointer to current line's text ] )
 : gcline  curr-line @ linelist-line ;
+: gclen   curr-line @ linelist-len ;
 ( print entire file to stdout )
-: ,p        10 emit rcurr num-lines @ 1 u+do i itos 58 emit 32 emit gcline @ max-line type 10 emit n-line loop ;
+: ,p        10 emit rcurr num-lines @ 1 u+do i itos 58 emit 32 emit gcline @ gclen @ type 10 emit n-line loop ;
 
 ( c-addr u line-num -- ) ( replace line with other text )
-: in      bfill addify gcline -rot line-buffer swap cmove
-          here line-buffer here max-line allot max-line cmove swap ! ;
+: in      bfill addify gcline -rot line-buffer swap dup 1 + { len } cmove
+          here line-buffer here len allot len cmove swap !
+          len gclen ! ;
 
 ( c-addr u line-num -- ) ( insert text between line-num and line-num + 1, or at the end if it is the last line )
-: ia      bfill -rot line-buffer swap cmove addify curr-line @ linelist-next @
-          linelist allocate throw dup curr-line @ linelist-next ! swap over linelist-next !
-          line-buffer align here max-line allot tuck max-line cmove swap linelist-line !
+: ia      bfill -rot line-buffer swap dup 1 + { len } cmove addify curr-line @ linelist-next @
+          linelist allocate throw dup curr-line @ linelist-next ! swap over linelist-next ! ( sets the current line's next line to the new one and the new line's next line to the one after )
+          line-buffer align here len allot tuck len cmove swap linelist-line ! ( sets the new line's string pointer to the text )
+          n-line len gclen ! ( sets the new line's int pointer to the length of the new line )
           num-lines @ 1 + num-lines ! ;
 ( c-addr u ) ( insert text before the first line )
-: i0      bfill line-buffer swap cmove fhead @
+: i0      bfill line-buffer swap dup 1 + { len } cmove fhead @
           linelist allocate throw dup fhead ! linelist-next !
           line-buffer align here max-line allot tuck max-line cmove fhead @ linelist-line !
+          len fhead @ linelist-len ! ( sets the first line's int pointer to the length of the first line )
           num-lines @ 1 + num-lines ! ;
 ( start-line end-line )
-( note: May want to add line numbers )
-: p      10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit max-line type 10 emit n-line loop ;
+: p      10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit gclen @ type 10 emit n-line loop ;
 
 ( line-addr )
 : s-line  dup c@ if begin dup 1 fh @ write-file throw 1 + dup c@ 0= until endif ;
@@ -87,8 +92,8 @@ create newl 1 allot
 : w       rcurr clean num-lines @ 1 u+do gcline @ s-line drop newl 1 fh @
           write-file throw n-line loop deinit close ;
 
-( line-num -- c-addr max-line ) ( copy a line )
-: c       addify gcline @ max-line ;
+( line-num -- c-addr len ) ( copy a line )
+: c       addify gcline @ gclen @ ;
 ( num -- c-addr num ) ( creates a string of n newline characters )
 : nline   here over allot over 0 u+do 10 over i + c! loop swap ;
 
