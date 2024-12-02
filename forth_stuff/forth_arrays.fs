@@ -38,20 +38,23 @@ execute executes it )
   loop
 ;
 
-: a_op ( op arr1 arr2 arr3 -- op arr1 arr2 arr3 [element wise operation on a1 and a2 like + so that we get a3[i] = a1[i] op a2[i]] ) 
-  dup @ 0 u+do
-  1 cells + rot 1 cells + rot 1 cells + rot 2swap -rot 2over @ swap @ rot dup 2swap rot execute rot tuck ! -rot swap 2swap
-  loop
-;
-
+: a_op ( op arr1 arr2 -- arr1 arr2 arr3 [element wise operation on a1 and a2 like + so that a3[i] = a1[i] + a2[i] )
+dup @ here over 1 + cells allot { op arr1 arr2 len arr3 } len arr3 !
+arr1 arr2 arr3
+len 1 + 1 u+do arr1 i cells + @ arr2 i cells + @ op execute arr3 i cells + ! loop ;
+: c-b ( arr ind -- arr ind [checks if the bounds are allowed] ) { arr ind } arr @ ind < if s" out of bounds" exception throw endif arr ;
+: m_row ( matrix1 i -- arr1 [returns row i of the matrix, 1-indexed, so for example a 2 by 2 matrix has rows 1 and 2] ) cells + @ ;
+: m_el ( matrix1 i j -- n [element m_{ij}] ) -rot m_row swap c-b swap cells + @ ;
+: m_cre ( i j -- matrix1 ) here { rows cols addr } rows 1 + cells allot rows addr ! rows 1 + 1 u+do here cols 1 + cells allot cols over ! addr i cells + ! loop addr ;
 ( So for multi dimensional arrays we have an array of pointers. But to tell apart the pointer 40459045 from the number 40459045, arrays of pointers will have negative length numbers )
 ( On second thought this is a user-side issue only use matrix functions on matrices and array functions on arrays that's why there are different ones, this is probably better )
 
-: m_op ( op matrix1 matrix2 matrix3 -- op matrix1 matrix2 matrix3 [operation can be something like addition or subtraction or any element-wise operation, all matrices must have same size] )
-  dup @ 0 u+do
-  1 cells + rot 1 cells + rot 1 cells + rot 2dup @ swap @ 2rot 2dup @ -rot 2rot 2rot swap 2swap a_op drop drop drop drop swap 2swap
-  loop
+: m_op ( op matrix1 matrix2 -- matrix1 matrix2 matrix3 [operation can be something like addition or subtraction or any element-wise operation] )
+here swap dup @ { op m1 m3 m2 rows } rows 1 + cells allot rows m3 ! rows 1 + 1 u+do
+op m1 i m_row m2 i m_row .s a_op m3 i cells + ! drop drop
+loop m1 m2 m3
 ;
-
-: switch ( add1 add2 -- add1 add2 ) dup
-;
+( create m1 3 cells allot create m2 3 cells allot create m1r1 3 cells allot create m1r2 3 cells allot create m2r1 3 cells allot create m2r2 3 cells allot 2 m1 ! 2 m2 ! )
+( : set2 )
+  ( 2 m1r1 ! 2 m1r2 ! 2 m2r1 ! 2 m2r2 ! 5 m1r1 1 cells + ! 3 m1r1 2 cells + ! 8 m1r2 1 cells + ! 4 m1r2 2 cells + ! 9 m2r1 1 cells + ! 11 m2r1 2 cells + ! 0 m2r2 1 cells + ! 7 m2r2 2 cells + ! )
+( test )

@@ -117,9 +117,7 @@ create newl 1 allot
 ( also inserted the newlines after reloading this code and using nline which I wrote in this editor yeaaaaaaaaa )
 : gl 1 num-lines @ ;
 : yay s" yay!" type ;
-create qmark 1 allot 34 qmark !
-( line-num -- replace [quote] with a quotation mark on line-num )
-: qrep { num } qmark 1 s" quote" num num srmul ;
+
 
 
 ( this needs to be at the end of the file, keeps track of the starting point for allocations so that saving frees everything done since )

@@ -1,5 +1,5 @@
 retesting i0 one more time
-and just making sure I did the right thing with i0
+also just making sure I did the right thing with i0
 this should be the first line now
 test file to not break real ones until I know the editor works
 that was hopefully the only issue
