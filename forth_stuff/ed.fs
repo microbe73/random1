@@ -98,17 +98,24 @@ create newl 1 allot
 
 ( I edited this line using this new sr feature it felt so cool im literally this 1950s IBM superhacker )
 ( c-addr1 u1 c-addr2 u2 line-num -- [replace string 2 with string 1 on line-num] )
-: sr    b2fill { c1 u1 c2 u2 line-num }
-        line-num addify 0 0 begin gcline @ over + u2 c2 u2 compare
+: sr    b2fill dup addify gclen @ { c1 u1 c2 u2 line-num length }
+        0 0 begin gcline @ over + u2 c2 u2 compare
         if 2dup gcline @ + c@ swap buffer2 + c! 1 + swap 1 + swap ( not a match )
         else over buffer2 + c1 swap u1 cmove u2 + swap u1 + swap gclen @ u1 u2 - + gclen ! endif ( match between the strings )
-        2dup gclen @ 1 - > swap gclen @ 1 - > or until drop drop ; ( this is criminal forth style here but it works so wtv )
+        dup length 1 - > until drop drop ; ( this is criminal forth style here but it works so wtv )
+( the new correct string should be in buffer2 )
+( : sr2   b2fill { c1 u1 c2 u2 line-num }
+        line-num addify buffer2 gclen @ u2 - 0 u+do
+        gcline @ i + u2 c2 u2 compare
+        if gcline @ i + c@ over c! 1 +
+        else c1 over u1 cmove u1 + gclen @ u1 u2 - + gclen ! endif
+        loop drop ; ) ( treesitter bug btw i think they need to fix that )
 ( this is the multiple lol )
 ( testing multiple inserts at once )
 ( made in make more stack sense, testing if i broke )
 ( I don't think it broke )
 ( c-addr1 u1 c-addr2 u2 start-line end-line -- [replace string 2 with string 1 on all lines in a range] )
-: srmul  { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr buffer2 gclen @ i in loop ;
+: srmul  { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr buffer2 gclen @ 1 - i in loop ;
 : sc { c1 u1 line-num } 0 line-num addify begin gcline @ over + u1 c1 u1 compare
 0= if line-num . dup . 59 emit endif 1 + dup gclen @ 1 - >= until drop ;
 ( lul lol lol )
@@ -121,6 +128,6 @@ create qmark 1 allot 34 qmark !
 ( line-num -- replace [quote] with a quotation mark on line-num )
 : qrep { num } qmark 1 s" quote" num num srmul ;
 
-
+: test s" test_ed.txt" init ,p w ;
 ( this needs to be at the end of the file, keeps track of the starting point for allocations so that saving frees everything done since )
 here initial-mem !
