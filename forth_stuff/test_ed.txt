@@ -1,12 +1,5 @@
-going to test every functionality and see if saving gets broken
-retesting izero one more time
+retesting i0 one more time
 also just making sure I did the right thing with i0
-this should be the first line now
-test file to not break real ones until I know the editor works
-that was hopefully the only issue
-maybe not closing the file was the issue?
-just making sure the copying didnt not work
-line numbers are pretty nice I like them
 testing if the new len stuff works on basic features
 I do think it would be nice if it worked ykyk
 it did not look good oops
@@ -14,4 +7,6 @@ but maybe now it looks okay?
 possibly it was that cuz im pretty sure that's some bad memory practice
 speaking of bad memory practice and copium I am also going to be on the having one extra 0 at the end was the issue copium for as long as I can as well
 I'm gonna be on the not closing the file was the issue copium for as long as I can
-going to add something to the last line see if that might mess with it
+It was in fact not the not closing the file issue, it would be ideal if I could actually figure out what causes that bug and recreate it consistently
+I don't even think it's a length issue I've had this bug even when it was 2d array text storage im pretty sure, tis unfortunate
+it was 2d array text storage im pretty sure, tis unfortunate

@@ -18,25 +18,25 @@ execute executes it )
   0 > ;
 
 : ccount ( op arr -- op arr num [counts the number of elements in an array that meet a condition] )
-  0 swap dup @ 0 u+do
-  1 cells + dup @ -rot 2swap swap tuck execute 
-  if
-    rot 1 + rot
-  else
-    -rot
-  endif
-  loop swap ;
+{ op arr }
+0 arr @ 0 u+do
+arr i 1 + cells + @ op execute
+if 1 + endif loop op swap arr swap ;
 
-: filter ( op arr2 arr1 -- op arr2 arr1 [arr1 is filtered into arr2, run ccount first to find the correct size for arr2] )
-  dup @ 0 u+do
-  1 cells + swap -rot dup @ rot tuck execute 
-  if
-    -rot dup @ rot 1 cells + tuck ! swap
-  else
-    -rot
-  endif
-  loop
-;
+
+
+
+
+: filter ( op arr1 -- op arr1 arr2 [arr1 is filtered into arr2] )
+ccount here over 1 + cells allot
+{ op arr1 num arr2 }
+1 arr1 @ 0 u+do arr1 i 1 + cells + @ op execute
+if arr1 i 1 + cells + @ over cells arr2 + !
+1 + endif
+loop drop op arr1 num arr2 ! arr2 ; 
+
+
+
 
 : a_op ( op arr1 arr2 -- arr1 arr2 arr3 [element wise operation on a1 and a2 like + so that a3[i] = a1[i] + a2[i] )
 dup @ here over 1 + cells allot { op arr1 arr2 len arr3 } len arr3 !

@@ -88,8 +88,8 @@ create newl 1 allot
 10 newl !
 : clearall initial-mem @ here - allot ;
 ( save changes ) ( maybe just refactor to use while loop instead of for loop to avoid off by 1 errors )
-: w       rcurr clean num-lines @ 1 u+do gcline @ s-line drop newl 1 fh @
-          write-file throw n-line loop deinit close clearall ;
+: w       rcurr clean num-lines @ 1 u+do gcline @ gclen @ 1 - fh @
+          write-line throw n-line loop deinit close clearall ;
 
 ( line-num -- c-addr len ) ( copy a line )
 : c       addify gcline @ gclen @ ;
