@@ -36,7 +36,18 @@ if arr1 i 1 + cells + @ over cells arr2 + !
 loop drop op arr1 num arr2 ! arr2 ; 
 
 
+: sorted ( arr1 -- flag [true if arr1 is sorted, false otherwise] )
+    { arr1 } 1 arr1 1 cells + @ arr1 @ 1 + 2 u+do arr1 i cells + @ < or arr1 i cells + @ loop nip ;
 
+: min_ind ( op i arr1 -- j [index of entry to put first of arr1 between i and the end of the array] )
+   { op ind arr1 } ind arr1 ind cells + @ arr1 @ 1 + ind u+do dup arr1 i cells + @ swap op execute
+   if 2drop i arr1 i cells + @ endif loop drop ;
+
+: switch { ind1 ind2 arr1 -- } arr1 ind1 cells + @ arr1 ind2 cells + @ arr1 ind1 cells + ! arr1 ind2 cells + !
+;
+
+: sort ( op arr1 -- arr1 [sorts arr1 in-place from smallest to largest] )
+    { op arr1 } arr1 @ 1 u+do op i arr1 min_ind i arr1 switch loop arr1 ;
 
 : a_op ( op arr1 arr2 -- arr1 arr2 arr3 [element wise operation on a1 and a2 like + so that a3[i] = a1[i] + a2[i] )
 dup @ here over 1 + cells allot { op arr1 arr2 len arr3 } len arr3 !

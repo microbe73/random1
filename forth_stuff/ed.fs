@@ -12,7 +12,9 @@ begin-structure linelist ( -- u )
         field: linelist-line  ( intlist -- addr2 ) ( string pointer [char*[]] )
         field: linelist-len ( intlist -- addr3 ) ( int pointer )
 end-structure
-
+( I think i'm pretty happy with the state of the editor for right now, it has pretty much all the basic features I would want with inserting, deleting,
+copying, search and replace etc. and I'm actually confident that it all works. I may implement the bounds checking but it's not too serious and most of the
+time GForth will just throw an out of bounds error anyway )
 ( todo: avoid buffer overflows if possible [for functions make sure the line number given is not too large] [going to leave this as user skill issue for now] )
 : bfill   max-line 0 u+do line-buffer i + 0 swap ! loop ;
 : b2fill  max-line 0 u+do buffer2 i + 0 swap ! loop ;
@@ -28,7 +30,7 @@ bfill
 : lcount  0 num-lines ! begin line-buffer max-line fh @ read-line throw num-lines @ 1 +
           num-lines ! nip 0= until ;
 
-( could probably be refactored to not use locals and be shorter, but works for now )
+
 : l-load  { len } align here line-buffer align here len allot len cmove curr-line @ linelist-line !
           linelist allocate throw curr-line @ linelist-next ! len curr-line @ linelist-len !
           curr-line @ linelist-next @ curr-line !
@@ -41,7 +43,7 @@ bfill
 ( c-addr u -- [load a file into memory] )
 : init    open lcount linelist allocate throw fhead ! rcurr clean f-load ;
 
-( should fix this )
+
 : deinit  rcurr begin curr-line @ dup linelist-next @ swap free throw dup curr-line ! until ;
 
 ( sets curr-line to the next line )
@@ -81,20 +83,21 @@ bfill
 ( start-line end-line )
 : p      10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit gclen @ type 10 emit n-line loop ;
 
-( line-addr )
-: s-line  dup c@ if begin dup 1 fh @ write-file throw 1 + dup c@ 0= until endif ;
+( line-num ) ( delete given line )
+: del     1 - addify curr-line @ linelist-next @ curr-line @ linelist-next @ linelist-next @ curr-line @ linelist-next !
+          free throw num-lines @ 1 - num-lines ! ;
+( delete the first line )
+: d0      fhead @ fhead @ linelist-next @ fhead ! free throw num-lines @ 1 - num-lines ! ;
 
 create newl 1 allot
 10 newl !
 : clearall initial-mem @ here - allot ;
 ( save changes ) ( maybe just refactor to use while loop instead of for loop to avoid off by 1 errors )
-: w       rcurr clean num-lines @ 1 u+do gcline @ gclen @ 1 - fh @
-          write-line throw n-line loop deinit close clearall ;
+: w       rcurr clean 0 num-lines @ 1 u+do gcline @ gclen @ tuck 1 - fh @
+          write-line throw n-line + loop 0 fh @ resize-file close deinit clearall ;
 
 ( line-num -- c-addr len ) ( copy a line )
 : c       addify gcline @ gclen @ ;
-( num -- c-addr num ) ( creates a string of n newline characters )
-: nline   here over allot over 0 u+do 10 over i + c! loop swap ;
 
 ( I edited this line using this new sr feature it felt so cool im literally this 1950s IBM superhacker )
 ( c-addr1 u1 c-addr2 u2 line-num -- [replace string 2 with string 1 on line-num] )
@@ -110,19 +113,16 @@ create newl 1 allot
         if gcline @ i + c@ over c! 1 +
         else c1 over u1 cmove u1 + gclen @ u1 u2 - + gclen ! endif
         loop drop ; ) ( treesitter bug btw i think they need to fix that )
-( this is the multiple lol )
-( testing multiple inserts at once )
-( made in make more stack sense, testing if i broke )
-( I don't think it broke )
+
 ( c-addr1 u1 c-addr2 u2 start-line end-line -- [replace string 2 with string 1 on all lines in a range] )
 : srmul  { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr buffer2 gclen @ 1 - i in loop ;
 : sc { c1 u1 line-num } 0 line-num addify begin gcline @ over + u1 c1 u1 compare
 0= if line-num . dup . 59 emit endif 1 + dup gclen @ 1 - >= until drop ;
-( lul lol lol )
+
 ( c1 u1 line-start line-end )
 : scmul swap 1 + u+do 2dup i sc loop drop drop ;
 ( also inserted the newlines after reloading this code and using nline which I wrote in this editor yeaaaaaaaaa )
-: gl 1 num-lines @ ;
+: gl 1 num-lines @ 1 - ;
 : yay s" yay!" type ;
 create qmark 1 allot 34 qmark !
 ( line-num -- replace [quote] with a quotation mark on line-num )

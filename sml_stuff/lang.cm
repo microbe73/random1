@@ -1,0 +1,15 @@
+Library
+  structure LexicalToken
+  structure AST
+  structure Scan
+  structure Parse
+  structure Eval
+is
+  $/basis.cm
+  $/smlnj-lib.cm
+  lexical-token.sml
+  ast.sml
+  scan.sml
+  parse.sml
+  eval.sml
+

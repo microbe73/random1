@@ -1,12 +1,9 @@
-retesting i0 one more time
-also just making sure I did the right thing with i0
+tried d0 hope it worked
 testing if the new len stuff works on basic features
 I do think it would be nice if it worked ykyk
-it did not look good oops
-but maybe now it looks okay?
+I think it writes on extra characters equal to the number of characters removed from the line
 possibly it was that cuz im pretty sure that's some bad memory practice
 speaking of bad memory practice and copium I am also going to be on the having one extra 0 at the end was the issue copium for as long as I can as well
 I'm gonna be on the not closing the file was the issue copium for as long as I can
-It was in fact not the not closing the file issue, it would be ideal if I could actually figure out what causes that bug and recreate it consistently
-I don't even think it's a length issue I've had this bug even when it was 2d array text storage im pretty sure, tis unfortunate
-it was 2d array text storage im pretty sure, tis unfortunate
+it's so much better now that the actual saving bug is fixed lol
+it worked?!

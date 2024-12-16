@@ -5,7 +5,7 @@
 ( essentially create a programming language )
 empty
 
-: srcfile   s" c.txt" ;
+: srcfile   s" d.txt" ;
 
 ( buffer for reading )
 variable 'src
