@@ -4,6 +4,7 @@ Library
   structure Scan
   structure Parse
   structure Eval
+  structure Test
 is
   $/basis.cm
   $/smlnj-lib.cm
@@ -12,4 +13,4 @@ is
   scan.sml
   parse.sml
   eval.sml
-
+  test.sml

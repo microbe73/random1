@@ -7,6 +7,6 @@ structure AST = struct
   | And of term * term
   | List of term list
   | Head of term
-(* Ind should be like Ind(0, [1,2,3]) = 1 *)
+
 end
 

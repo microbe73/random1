@@ -21,11 +21,13 @@ end = struct
              | (#"H" :: #"e" :: #"a" :: #"d" :: cs) => SOME (T.Head, cs)
              | (num :: cs) =>
                  let
-                   val n = Char.ord(num) - 49
+                   val n = Char.ord(num) - 48
                  in
                    if n >= 0 andalso n < 10 then SOME ((T.Nat n, cs)) else raise
-                   Fail "Unable to parse token"
-                 end)
+                   Fail "Unable to parse number"
+                 end
+             | _ => raise Fail "Unable to parse token"
+                 )
       | [] => NONE
       )
     fun scan input_list =
