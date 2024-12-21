@@ -80,6 +80,13 @@ bfill
           line-buffer align here max-line allot tuck max-line cmove fhead @ linelist-line !
           len fhead @ linelist-len ! ( sets the first line's int pointer to the length of the first line )
           num-lines @ 1 + num-lines ! ;
+( c-addr u line-num c-num -- ) ( insert text at a specific character in a line )
+: ic      bfill { len line-num c-num } len line-num addify gclen @ c-num < if -1 abort" Illegal insertion (beyond end of line)" endif
+          gcline @ line-buffer c-num cmove line-buffer c-num + swap cmove gcline @ c-num + line-buffer len c-num + + gclen @ c-num - cmove ( move everything into the line buffer )
+          here line-buffer here len gclen @ + allot len gclen @ + cmove gcline !
+          len gclen @ + gclen ! ;
+
+
 ( start-line end-line )
 : p      10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit gclen @ type 10 emit n-line loop ;
 
@@ -128,6 +135,5 @@ create qmark 1 allot 34 qmark !
 ( line-num -- replace [quote] with a quotation mark on line-num )
 : qrep { num } qmark 1 s" quote" num num srmul ;
 
-: test s" test_ed.txt" init ,p w ;
 ( this needs to be at the end of the file, keeps track of the starting point for allocations so that saving frees everything done since )
 here initial-mem !

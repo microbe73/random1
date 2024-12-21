@@ -1,4 +1,4 @@
-tried d0 hope it worked
+tried  using ic here d0 hope it worked
 testing if the new len stuff works on basic features
 I do think it would be nice if it worked ykyk
 I think it writes on extra characters equal to the number of characters removed from the line
