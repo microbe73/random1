@@ -41,7 +41,6 @@ Proof.
 Qed.
 
 
-
 Fixpoint gt (a b : nat) : bool :=
   match a with
   | 0 => false

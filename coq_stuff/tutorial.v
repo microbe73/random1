@@ -1,5 +1,7 @@
 Set Implicit Arguments.
 Set Asymmetric Patterns.
+Require List.
+Open Scope list_scope.
 
 Inductive binop : Set :=
   Plus | Times.
@@ -30,4 +32,18 @@ Eval simpl in expDenote (Binop Plus (Const 2) (Const 3)).
 Eval simpl in expDenote (First (Binop Plus (Const 2) (Const 3)) (Binop Times (Const 2) (Const 3))).
 Eval simpl in expDenote (Second (Binop Plus (Const 2) (Const 3)) (Binop Times (Const 2) (Const 3))).
 
+Inductive instr : Set :=
+  | iConst : nat -> instr
+  | iBinop : binop -> instr.
+Definition prog := list instr.
+Definition stack := list nat.
 
+Definition instrDenote (i : instr) (s: stack) : option stack :=
+  match i with
+  | iConst n => Some (n :: s)
+  | iBinop b =>
+      match s with
+      | (arg1 :: arg2 :: s') => Some ((binopDenote b1) arg1 arg2 :: s')
+      | _ => None
+      end
+  end.
