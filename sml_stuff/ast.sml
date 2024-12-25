@@ -7,6 +7,8 @@ structure AST = struct
   | And of term * term
   | List of term list
   | Head of term
+  | Char of char
+  | Real of real
 
 end
 

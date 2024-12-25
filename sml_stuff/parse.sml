@@ -6,7 +6,7 @@ end = struct
 
   structure T = LexicalToken
   structure A = AST
-(*todo: test it, but it compiles and its SML so like it probably works *)
+
  fun oneTermParse tList =
       let fun parseList (tList : (AST.term * LexicalToken.token list)) : (AST.term * LexicalToken.token list) option =
          let
@@ -39,6 +39,8 @@ end = struct
             | (T.True :: toks) => SOME (A.True, toks)
             | (T.False :: toks) => SOME (A.False, toks)
             | (T.Nat n :: toks) => SOME (A.Nat n, toks)
+            | (T.Char c :: toks) => SOME (A.Char c, toks)
+            | (T.Real r :: toks) => SOME (A.Real r, toks)
             | (T.Add :: T.LPar :: toks) =>
                   (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound add)"
@@ -69,7 +71,7 @@ end = struct
                       | _ => raise Fail "closing parentheses for head missing"
                     )
             | (T.LBrac :: toks) => parseList (A.List [], toks)
-            | _ => raise Fail "unable to parse tokens (no list parsing yet)"
+            | _ => raise Fail "unable to parse tokens "
          )
       in
          nextTerm tList

@@ -3,6 +3,8 @@ structure LexicalToken = struct
   = True
   | False
   | Nat of int
+  | Char of char
+  | Real of real
   | RPar
   | LPar
   | RBrac
