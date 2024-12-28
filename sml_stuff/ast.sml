@@ -9,6 +9,14 @@ structure AST = struct
   | Head of term
   | Char of char
   | Real of real
-
+  | Sub of term * term
+  | Or of term * term
+  | If of term * term * term
+  | Mul of term * term
+  | Div of term * term
+  | Concat of term * term
+  | Comp of term * term
+  | Lt of term * term
+  | Gt of term * term
 end
 

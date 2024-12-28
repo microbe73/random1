@@ -13,4 +13,13 @@ structure LexicalToken = struct
   | Add
   | Comma
   | Head
+  | Sub
+  | Or
+  | If
+  | Mul
+  | Div
+  | Concat
+  | Comp
+  | Lt
+  | Gt
 end

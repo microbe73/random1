@@ -35,6 +35,7 @@ end = struct
 
       )
     end
+
   fun nextTokenReal (cs_w_num : (char list * real * pval)) : (T.token * char list)
     option =
     let
@@ -74,6 +75,7 @@ end = struct
             )
       )
     end
+
   fun nextToken clist =
     (case clist
        of (c :: cls) => if Char.isSpace(c) then nextToken cls else
@@ -92,6 +94,16 @@ end = struct
              | (#"H" :: #"e" :: #"a" :: #"d" :: cs) => SOME (T.Head, cs)
              | (#"#" :: c :: cs) => SOME (T.Char c, cs)
              | (#"R" :: cs) => nextTokenReal (cs, 0.0, Before_Dec)
+             | (#"S":: #"u" :: #"b" :: cs) => SOME (T.Sub, cs)
+             | (#"O" :: #"r" :: cs) => SOME (T.Or, cs)
+             | (#"I" :: #"f" :: cs) => SOME (T.If, cs)
+             | (#"M" :: #"u" :: #"l" :: cs) => SOME (T.Mul, cs)
+             | (#"D" :: #"i" :: #"v" :: cs) => SOME (T.Div, cs)
+             | (#"L" :: #"t" :: cs) => SOME (T.Lt, cs)
+             | (#"G" :: #"t" :: cs) => SOME (T.Gt, cs)
+             | (#"C" :: #"o" :: #"n" :: #"c" :: #"a" :: #"t" :: cs) => SOME
+             (T.Concat, cs) 
+             | (#"C" :: #"o" :: #"m" :: #"p" :: cs) => SOME (T.Comp, cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE
