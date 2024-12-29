@@ -1,10 +1,12 @@
 structure Test = struct
   structure T = LexicalToken
   structure A = AST
-  fun scan () =
+  fun test s =
     let
-      val _ = () (* Check.expect (Scan.scan "0" [T.Nat 0], "scan1") *)
+      val lexTokList = Scan.scan s
+      val ast = Parse.parse lexTokList
+      val res = Eval.eval ast
     in
-      TextIO.print "Scan testing done\n"
+      (lexTokList, ast, res)
     end
 end

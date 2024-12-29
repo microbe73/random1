@@ -18,5 +18,6 @@ structure AST = struct
   | Comp of term * term
   | Lt of term * term
   | Gt of term * term
+  | Exn of string
 end
 

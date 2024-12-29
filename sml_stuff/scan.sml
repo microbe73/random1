@@ -11,7 +11,7 @@ end = struct
   = Normal
   | Int
   | Char
-  (* | Real todo: implement real number scanning *)
+  
   datatype pval
   = Before_Dec
   | After_Dec of real
