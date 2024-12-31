@@ -2,7 +2,7 @@ structure Eval : sig
   val eval : AST.term -> AST.term
 end = struct
   structure A = AST
-
+  structure S = Subst
   fun eval term =
     (case term
        of A.Add (t1, t2) =>
@@ -169,9 +169,18 @@ end = struct
                   | _ => raise Fail "Comprehending on non-list"
               )
             end
+        | A.App (t1, t2) =>
+            let
+              val t1prime = eval t1
+              val t2prime = eval t2
+            in
+              (case t1prime
+                 of A.Lam (x, term) => eval (S.sub (x, t2prime, term))
+                  | _ => raise Fail "Applying to non-function"
+              )
+            end
         | _ => term
     )
-
 
 end
 

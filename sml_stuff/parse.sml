@@ -178,6 +178,29 @@ end = struct
                       | _ => raise Fail "closing parentheses for head missing"
                     )
             | (T.LBrac :: toks) => parseList (A.List [], toks)
+            | (T.Var c :: toks) => SOME (A.Var c, toks)
+            | (T.Lam :: T.LPar :: toks) =>
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound lambda)"
+                      | SOME (A.Var x, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (lam second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Lam(x,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (lam first term)"
+                    )
+            | (T.App :: T.LPar :: toks) =>
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound app)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (app second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.App(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (app second term)"
+                    )
             | _ => raise Fail "unable to parse tokens "
          )
       in

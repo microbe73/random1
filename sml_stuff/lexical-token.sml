@@ -22,4 +22,7 @@ structure LexicalToken = struct
   | Comp
   | Lt
   | Gt
+  | Var of string
+  | Lam
+  | App
 end

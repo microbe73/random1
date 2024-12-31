@@ -5,6 +5,8 @@ Library
   structure Parse
   structure Eval
   structure Test
+  structure Subst
+  structure VarSet
 is
   $/basis.cm
   $/smlnj-lib.cm
@@ -14,3 +16,5 @@ is
   parse.sml
   eval.sml
   test.sml
+  subst.sml
+  var-set.sml

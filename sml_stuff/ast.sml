@@ -19,5 +19,8 @@ structure AST = struct
   | Lt of term * term
   | Gt of term * term
   | Exn of string
+  | Var of string
+  | Lam of string * term
+  | App of term * term
 end
 

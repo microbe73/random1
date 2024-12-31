@@ -104,6 +104,9 @@ end = struct
              | (#"C" :: #"o" :: #"n" :: #"c" :: #"a" :: #"t" :: cs) => SOME
              (T.Concat, cs) 
              | (#"C" :: #"o" :: #"m" :: #"p" :: cs) => SOME (T.Comp, cs)
+             | (#"A" :: #"p" :: #"p" :: cs) => SOME (T.App, cs)
+             | (#"L" :: #"a" :: #"m" :: cs) => SOME (T.Lam, cs)
+             | (#"V" :: c :: cs) => SOME (T.Var (Char.toString(c)), cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE
