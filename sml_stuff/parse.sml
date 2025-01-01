@@ -82,6 +82,25 @@ end = struct
                           )
                       | _ => raise Fail "Parse error (If second term)"
                   )
+            | (T.Let :: T.LPar :: toks) => 
+               (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound let)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (Let second term) "
+                              | SOME (t2, T.Comma :: toks2) => 
+                                   (case nextTerm toks2
+                                      of NONE => raise Fail 
+                                      "Parse error (Let third term)"
+                                       | SOME (t3, T.RPar :: toks3) =>
+                                            SOME (A.Let(t1, t2, t3), toks3)
+                                       | _ => raise Fail 
+                                       "Par error (closing parentheses)"
+                                    )
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (Let second term)"
+                  )
             | (T.Mul :: T.LPar :: toks) =>
                    (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound Mul)"

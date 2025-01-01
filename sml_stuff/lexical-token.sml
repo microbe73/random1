@@ -25,4 +25,5 @@ structure LexicalToken = struct
   | Var of string
   | Lam
   | App
+  | Let
 end

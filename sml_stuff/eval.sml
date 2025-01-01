@@ -179,6 +179,15 @@ end = struct
                   | _ => raise Fail "Applying to non-function"
               )
             end
+        | A.Let (x, t1, t2) =>
+            let
+              val t1prime = eval t1
+            in
+              (case x
+                 of A.Var s => eval (S.sub (s, t1prime, t2))
+                  | _ => raise Fail "Let expression assigned to non-variable"
+              )
+            end
         | _ => term
     )
 

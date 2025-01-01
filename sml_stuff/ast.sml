@@ -22,5 +22,6 @@ structure AST = struct
   | Var of string
   | Lam of string * term
   | App of term * term
+  | Let of term * term * term
 end
 

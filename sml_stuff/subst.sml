@@ -54,6 +54,14 @@ end = struct
   in
     fvg start_term
   end
+  val inc = ref 0
+  fun new_var () =
+    let
+      val x = !(inc)
+      val _ = inc := !(inc) + 1
+    in
+      "A" ^ Int.toString(x)
+    end
   fun sub (x : (string * A.term * A.term)) : A.term =
     let fun subst (xt2term : (string * A.term * A.term)) : A.term =
     let
@@ -67,7 +75,13 @@ end = struct
               if x <> y andalso V.mem(y, fv t2) = false then
                 A.Lam(y, subst (x, t2, t1))
               else
-                raise Fail "todo: Substitution in non-obvious case"
+                if x = y then term else
+                  let
+                    val y' = new_var()
+                    val t1' = subst (y, A.Var y', t1)
+                  in
+                    A.Lam (y', subst (x, t2, t1'))
+                  end
           | A.Add (t1, t3) => A.Add (subst (x, t2, t1), subst (x, t2, t3))
           | A.And (t1, t3) => A.And (subst (x, t2, t1), subst (x, t2, t3))
           | A.Sub (t1, t3) => A.Sub (subst (x, t2, t1), subst (x, t2, t3))
