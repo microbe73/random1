@@ -1,4 +1,5 @@
 structure AST = struct
+  structure T = Types
   datatype term
   = Nat of int
   | True
@@ -20,7 +21,7 @@ structure AST = struct
   | Gt of term * term
   | Exn of string
   | Var of string
-  | Lam of string * term
+  | Lam of string * T.typ * term
   | App of term * term
   | Let of term * term * term
 end

@@ -3,6 +3,22 @@ structure Eval : sig
 end = struct
   structure A = AST
   structure S = Subst
+  fun unlet term =
+    (case term
+       of A.Let(x, t1, t2) =>
+            let
+              val t2prime = unlet t2
+              val t1prime = unlet t1
+              val typ = TypeCheck.check t1prime
+            in
+              (case x
+                 of A.Var s => A.App (A.Lam (s, Types.Nat, t2prime), t1prime)
+                  | _ => raise Fail "Non-variable assigned to let expression"
+              )
+            end
+        | _ => term (* means that let expressions are not allowed unless they
+        are the top level expressions which I suppose is fine *)
+    )
   fun eval term =
     (case term
        of A.Add (t1, t2) =>
@@ -175,7 +191,7 @@ end = struct
               val t2prime = eval t2
             in
               (case t1prime
-                 of A.Lam (x, term) => eval (S.sub (x, t2prime, term))
+                 of A.Lam (x, typ, term) => eval (S.sub (x, t2prime, term))
                   | _ => raise Fail "Applying to non-function"
               )
             end

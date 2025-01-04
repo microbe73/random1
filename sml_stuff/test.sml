@@ -40,5 +40,14 @@ structure Test = struct
  * val u = Scan.scan "Let(Vx, Add(Sub(6, 4), 8), App(Lam(Vx, Div(Vx, 5)), Vx))";
  * val w = Parse.parse u;
  * val x = Eval.eval w;
+ * Failing test! (Ideally I get rid of let expressions at some point in the
+ * compilation, replacing them with applications of lambda expressions, but I
+ * need to implement type-checking now to do that properly)
+ * val u = Scan.scan "Let(Vx, 6, Let(Vy, 8, Let(Vz, And(True, True), If(Vz, Vx, Vy))))";
+ * val w = Parse.parse u;
+ * val x = Eval.eval w;
+ * val u = Scan.scan "App(Lam(Vx, Nt, Add(Vx, 7)), 8)"
+ * val w = Parse.parse u;
+ * val x = Eval.eval w;
  *)
 end

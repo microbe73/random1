@@ -26,4 +26,10 @@ structure LexicalToken = struct
   | Lam
   | App
   | Let
+  | Nt
+  | Bl
+  | Lst
+  | Fn
+  | Rl
+  | Ch
 end

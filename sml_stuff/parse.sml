@@ -6,6 +6,7 @@ end = struct
 
   structure T = LexicalToken
   structure A = AST
+  structure Typ = Types
 
  fun oneTermParse tList =
       let fun parseList (tList : (AST.term * LexicalToken.token list)) : (AST.term * LexicalToken.token list) option =
@@ -33,6 +34,32 @@ end = struct
                         )
             )
          end
+      and nextType tList =
+        (case tList
+           of [] => raise Fail "unable to parse Lambda type"
+            | (T.Nt :: toks) => SOME (Types.Nat, toks)
+            | (T.Rl :: toks) => SOME (Types.Real, toks)
+            | (T.Ch :: toks) => SOME (Types.Char, toks)
+            | (T.Bl :: toks) => SOME (Types.Bool, toks)
+            | (T.Lst :: T.LPar :: toks) =>
+                (case nextType toks
+                     of NONE => raise Fail "Parse error (unbound List type)"
+                      | SOME (t1, T.RPar :: toks1) => SOME (Types.List(t1), toks1)
+                      | _ => raise Fail "closing parentheses for list type missing"
+                )
+            | (T.Fn :: T.LPar :: toks) =>
+                (case nextType toks
+                     of NONE => raise Fail "Parse error (unbound function type)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextType toks1
+                             of NONE => raise Fail "Parse error (fn type second term)"
+                              | SOME (t2, T.RPar :: toks2) => SOME (Types.Func(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (fn second term)"
+                  )
+            | _ => raise Fail "Unable to parse Lambda type"
+          )
       and nextTerm tList =
         (case tList
            of [] => NONE
@@ -202,9 +229,16 @@ end = struct
                   (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound lambda)"
                       | SOME (A.Var x, T.Comma :: toks1) =>
-                          (case nextTerm toks1
+                          (case nextType toks1
                              of NONE => raise Fail "Parse error (lam second term) "
-                              | SOME (t2, T.RPar :: toks2) => SOME (A.Lam(x,t2), toks2)
+                              | SOME (t2, T.Comma :: toks2) => 
+                                  (case nextTerm toks2
+                                     of NONE => raise Fail
+                                     "Parse error (lam third term)"
+                                      | SOME (t3, T.RPar :: toks3) =>
+                                          SOME (A.Lam(x, t2, t3), toks3)
+                                      | _ => raise Fail "Parse error closing par"
+                                  )
                               | _ => raise Fail "Pars error (closing parentheses)"
                           )
                       | _ => raise Fail "Parse error (lam first term)"

@@ -7,6 +7,8 @@ Library
   structure Test
   structure Subst
   structure VarSet
+  structure Types
+  structure TypeCheck
 is
   $/basis.cm
   $/smlnj-lib.cm
@@ -18,3 +20,5 @@ is
   test.sml
   subst.sml
   var-set.sml
+  types.sml
+  typecheck.sml

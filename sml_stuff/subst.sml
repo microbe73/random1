@@ -4,18 +4,7 @@ structure Subst : sig
   val sub : string * AST.term * AST.term -> AST.term
 
 end = struct
-(*
-  = Nat of int
-  | True
-  | False
-  | List of term list
-  | Head of term
-  | Char of char
-  | Real of real
-  | Exn of string
-  | Var of string
-  | Lam of string * term
- *)
+
   structure V = VarSet
   structure A = AST
   fun fv start_term =
@@ -34,7 +23,7 @@ end = struct
     and fvg term =
     (case term
        of A.Var s => V.ins(s, V.empty)
-        | A.Lam (x, t1) => V.rem(x, fv t1)
+        | A.Lam (x, typ, t1) => V.rem(x, fv t1)
         | A.Add (t1, t2) => fv_2_term (t1, t2)
         | A.And (t1, t2) => fv_2_term (t1, t2)
         | A.Sub (t1, t2) => fv_2_term (t1, t2)
@@ -71,16 +60,16 @@ end = struct
     in
       (case term
         of A.Var s => if s = x then t2 else term
-          | A.Lam (y, t1) =>
+          | A.Lam (y, typ, t1) =>
               if x <> y andalso V.mem(y, fv t2) = false then
-                A.Lam(y, subst (x, t2, t1))
+                A.Lam(y, typ, subst (x, t2, t1))
               else
                 if x = y then term else
                   let
                     val y' = new_var()
                     val t1' = subst (y, A.Var y', t1)
                   in
-                    A.Lam (y', subst (x, t2, t1'))
+                    A.Lam (y', typ, subst (x, t2, t1'))
                   end
           | A.Add (t1, t3) => A.Add (subst (x, t2, t1), subst (x, t2, t3))
           | A.And (t1, t3) => A.And (subst (x, t2, t1), subst (x, t2, t3))

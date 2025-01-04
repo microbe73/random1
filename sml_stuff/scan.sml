@@ -108,6 +108,12 @@ end = struct
              | (#"L" :: #"a" :: #"m" :: cs) => SOME (T.Lam, cs)
              | (#"V" :: c :: cs) => SOME (T.Var (Char.toString(c)), cs)
              | (#"L" :: #"e" :: #"t" :: cs) => SOME (T.Let, cs)
+             | (#"N" :: #"t" :: cs) => SOME (T.Nt, cs)
+             | (#"L" :: #"s" :: #"t" :: cs) => SOME (T.Lst, cs)
+             | (#"F" :: #"n" :: cs) => SOME (T.Fn, cs)
+             | (#"B" :: #"l" :: cs) => SOME (T.Bl, cs)
+             | (#"Q" :: #"l" :: cs) => SOME (T.Rl, cs)
+             | (#"C" :: #"h" :: cs) => SOME (T.Ch, cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE
