@@ -21,33 +21,42 @@ structure Test = struct
 (*
  * val u = Scan.scan "App(Lam(Vx, Vx), Vy)";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(App(Lam(Vx, Vx), Lam(Vx, Add(Vx, 7))), 5)";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(App(Lam(Vx, Lam(Vy, Sub(Vx, Vy))), 5), 3)";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(Lam(Vx, Mul(R3.75, Vx)), App(Lam(Vy, Head(Vy)), [R1.3, R3.75]))";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(Lam(Vx, If(Vx, 3, 12)), And(True, False))";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(Lam(Vx, App(Lam(Vy, Div(Vx, Vy)), 3)), 15)";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "Let(Vx, Add(Sub(6, 4), 8), App(Lam(Vx, Div(Vx, 5)), Vx))";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
- * Failing test! (Ideally I get rid of let expressions at some point in the
- * compilation, replacing them with applications of lambda expressions, but I
- * need to implement type-checking now to do that properly)
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "Let(Vx, 6, Let(Vy, 8, Let(Vz, And(True, True), If(Vz, Vx, Vy))))";
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  * val u = Scan.scan "App(Lam(Vx, Nt, Add(Vx, 7)), 8)"
  * val w = Parse.parse u;
- * val x = Eval.eval w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
+ * val u = Scan.scan "Add(2,3)";
+ * val w = Parse.parse u;
+ * val x = Eval.unlet w;
  *)
 end

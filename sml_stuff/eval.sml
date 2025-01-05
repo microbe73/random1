@@ -1,5 +1,6 @@
 structure Eval : sig
   val eval : AST.term -> AST.term
+  val unlet : AST.term -> AST.term
 end = struct
   structure A = AST
   structure S = Subst
@@ -9,7 +10,7 @@ end = struct
             let
               val t2prime = unlet t2
               val t1prime = unlet t1
-              val typ = TypeCheck.check t1prime
+              val typ = TypeCheck.check_term (t1prime, [])
             in
               (case x
                  of A.Var s => A.App (A.Lam (s, Types.Nat, t2prime), t1prime)
