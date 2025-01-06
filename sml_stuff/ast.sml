@@ -24,5 +24,6 @@ structure AST = struct
   | Lam of string * T.typ * term
   | App of term * term
   | Let of term * term * term
+  | FRead of term
 end
 

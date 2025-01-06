@@ -1,0 +1,6 @@
+read this in
+see how it goes
+it may work or may not
+but certainly it will be slow who explodes and implodes that much
+but also it is type safe?
+yay

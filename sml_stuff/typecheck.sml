@@ -2,7 +2,7 @@ structure TypeCheck : sig
   type env
   val lookup : (string * env) -> Types.typ
   val add_var : (string * Types.typ * env) -> env
-  val check_term : (AST.term * env) -> Types.typ
+  val check_term : AST.term -> Types.typ
 end = struct
   type env = (string * Types.typ) list
   (* efficiency is once again a skill issue *)
@@ -210,6 +210,19 @@ end = struct
               )
           | A.Exn s =>
               raise Fail "Impossible"
+          | A.FRead name =>
+              let
+                val type1 = check (name, env)
+              in
+                (case type1
+                   of Types.List c =>
+                        (case c
+                           of Types.Char => Types.List (Types.Char)
+                            | _ => raise Fail "FRead of non-string"
+                        )
+                    | _ => raise Fail "FRead of non-string"
+                  )
+                end
         )
       end
     and check_list (inp : AST.term list * Types.typ * ((string * Types.typ) list)) :
@@ -233,6 +246,6 @@ end = struct
           )
       end
     in
-      check t
+      check (t, [])
     end
 end

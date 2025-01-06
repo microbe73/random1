@@ -114,6 +114,8 @@ end = struct
              | (#"B" :: #"l" :: cs) => SOME (T.Bl, cs)
              | (#"Q" :: #"l" :: cs) => SOME (T.Rl, cs)
              | (#"C" :: #"h" :: cs) => SOME (T.Ch, cs)
+             | (#"F" :: #"R" :: #"e" :: #"a" :: #"d" :: cs) => SOME (T.FRead,
+                  cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE

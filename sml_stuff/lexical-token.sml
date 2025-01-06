@@ -32,4 +32,5 @@ structure LexicalToken = struct
   | Fn
   | Rl
   | Ch
+  | FRead
 end

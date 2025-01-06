@@ -223,6 +223,12 @@ end = struct
                       | SOME (t1, T.RPar :: toks1) => SOME (A.Head(t1), toks1)
                       | _ => raise Fail "closing parentheses for head missing"
                     )
+            | (T.FRead :: T.LPar :: toks) =>
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound FRead)"
+                      | SOME (t1, T.RPar :: toks1) => SOME (A.FRead(t1), toks1)
+                      | _ => raise Fail "closing parentheses for FRead missing"
+                    )
             | (T.LBrac :: toks) => parseList (A.List [], toks)
             | (T.Var c :: toks) => SOME (A.Var c, toks)
             | (T.Lam :: T.LPar :: toks) =>

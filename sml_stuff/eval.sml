@@ -10,7 +10,7 @@ end = struct
             let
               val t2prime = unlet t2
               val t1prime = unlet t1
-              val typ = TypeCheck.check_term (t1prime, [])
+              val typ = TypeCheck.check_term t1prime
             in
               (case x
                  of A.Var s => A.App (A.Lam (s, Types.Nat, t2prime), t1prime)
@@ -20,6 +20,28 @@ end = struct
         | _ => term (* means that let expressions are not allowed unless they
         are the top level expressions which I suppose is fine *)
     )
+  fun trm_to_clist trm =
+    (case trm
+       of A.List l1 =>
+            (case l1
+               of (c :: rest) =>
+                    (case c
+                       of A.Char c1 => ([c1] @ (trm_to_clist (A.List rest)))
+                        | _ => raise Fail "non-name given"
+                    )
+                | [] => []
+            )
+        | _ => raise Fail "non-name given"
+    )
+  fun readin filestream = explode (TextIO.inputAll filestream)
+  fun clist_to_trm clist =
+    (case clist
+       of [] => []
+        | (c :: rest) => [AST.Char c] @ clist_to_trm rest
+    )
+
+
+    
   fun eval term =
     (case term
        of A.Add (t1, t2) =>
@@ -205,7 +227,23 @@ end = struct
                   | _ => raise Fail "Let expression assigned to non-variable"
               )
             end
-        | _ => term
+        | A.True => term
+        | A.Nat n => term
+        | A.False => term
+        | A.Real r => term
+        | A.List lst => term
+        | A.Exn e => term
+        | A.Char c => term
+        | A.Lam (x, typ, t1) => term
+        | A.Var s => term
+        | A.FRead fname =>
+            let
+              val filename = implode (trm_to_clist fname)
+              val filestream = TextIO.openIn(filename)
+              val fileout = readin filestream
+            in
+              AST.List (clist_to_trm fileout)
+            end
     )
 
 end
