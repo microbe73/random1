@@ -86,7 +86,14 @@ end = struct
           | A.App (t1, t3) => A.App (subst (x, t2, t1), subst (x, t2, t3))
           | A.Head t => A.Head (subst (x, t2, t))
           | A.List lst => A.List (sub_list (x, t2, lst))
-          | _ => term
+          | A.FRead t => A.FRead (subst (x, t2, t))
+          | A.Nat n => A.Nat n
+          | A.True => A.True
+          | A.False => A.False
+          | A.Char c => A.Char c
+          | A.Real r => A.Real r
+          | A.Exn s => A.Exn s
+          | A.Let (t1, t2, t3) => raise Fail "Removing let bindings failed"
         )
     end
       and sub_list (xt2list : (string * A.term * A.term list)) : A.term list =

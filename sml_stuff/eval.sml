@@ -13,7 +13,7 @@ end = struct
               val typ = TypeCheck.check_term t1prime
             in
               (case x
-                 of A.Var s => A.App (A.Lam (s, Types.Nat, t2prime), t1prime)
+                 of A.Var s => A.App (A.Lam (s, typ, t2prime), t1prime)
                   | _ => raise Fail "Non-variable assigned to let expression"
               )
             end
@@ -236,14 +236,16 @@ end = struct
         | A.Char c => term
         | A.Lam (x, typ, t1) => term
         | A.Var s => term
-        | A.FRead fname =>
+        | A.FRead fnam =>
             let
+              val fname = eval fnam
               val filename = implode (trm_to_clist fname)
               val filestream = TextIO.openIn(filename)
               val fileout = readin filestream
             in
               AST.List (clist_to_trm fileout)
-            end
+            end handle IO.Io info => AST.Exn "Error opening file (check the name)"
+
     )
 
 end
