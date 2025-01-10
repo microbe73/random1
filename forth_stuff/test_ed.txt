@@ -1,5 +1,5 @@
 tried  using ic here d0 hope it worked
-testing if the new len stuff works on basic features
+trying out fancy new in2 with one nicer looking line
 I do think it would be nice if it worked ykyk
 I think it writes on extra characters equal to the number of characters removed from the line
 possibly it was that cuz im pretty sure that's some bad memory practice
