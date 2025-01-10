@@ -260,6 +260,28 @@ end = struct
                           )
                       | _ => raise Fail "Parse error (app second term)"
                     )
+            | (T.Binor :: T.LPar :: toks) => 
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound Binor)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (Binor second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Binor(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (Binor second term)"
+                    )
+            | (T.Binand :: T.LPar :: toks) => 
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound Binand)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (Binand second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Binand(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (Binand second term)"
+                    )
             | _ => raise Fail "unable to parse tokens "
          )
       in

@@ -39,7 +39,48 @@ end = struct
        of [] => []
         | (c :: rest) => [AST.Char c] @ clist_to_trm rest
     )
-
+  fun binor l1 l2 =
+    (case (l1, l2)
+       of (a1 :: rest1, a2 :: rest2) =>
+            (case (a1, a2)
+               of (A.Nat n1, A.Nat n2) =>
+                    if (n1 mod 2) = 1 orelse (n2 mod 2) = 1 then
+                      (A.Nat 1 :: binor rest1 rest2)
+                    else
+                      (A.Nat 0 :: binor rest1 rest2)
+                | _ => raise Fail "Invalid list"
+            )
+        | _ => []
+    )
+  fun binand l1 l2 =
+    (case (l1, l2)
+       of (a1 :: rest1, a2 :: rest2) =>
+            (case (a1, a2)
+               of (A.Nat n1, A.Nat n2) =>
+                    if (n1 mod 2) = 1 andalso (n2 mod 2) = 1 then
+                      (A.Nat 1 :: binand rest1 rest2)
+                    else
+                      (A.Nat 0 :: binand rest1 rest2)
+                | _ => raise Fail "Invalid list"
+            )
+        | _ => []
+    )
+  fun binmk lsts =
+    (case lsts
+       of (l1, l2) =>
+            let
+              val len1 = length l1
+              val len2 = length l2
+              fun mod2 x = x mod 2
+            in
+              if len1 < len2 then
+                binmk ((A.Nat 0 :: l1), l2)
+              else if len1 > len2 then
+                binmk (l1, (A.Nat 0 :: l2))
+              else
+                (l1, l2)
+            end
+    )
 
     
   fun eval term =
@@ -236,6 +277,30 @@ end = struct
         | A.Char c => term
         | A.Lam (x, typ, t1) => term
         | A.Var s => term
+        | A.Binor (l1, l2) => 
+            (case (l1, l2)
+               of (AST.List lst1, AST.List lst2) =>
+                    let
+                      val new_lists = binmk (lst1, lst2)
+                      val list1 = #1(new_lists)
+                      val list2 = #2(new_lists)
+                    in
+                      AST.List (binor list1 list2)
+                    end
+                | _ => raise Fail "invalid Binor terms given"
+            )
+        | A.Binand (l1, l2) =>
+            (case (l1, l2)
+               of (AST.List lst1, AST.List lst2) =>
+                    let
+                      val new_lists = binmk (lst1, lst2)
+                      val list1 = #1(new_lists)
+                      val list2 = #2(new_lists)
+                    in
+                      AST.List (binand list1 list2)
+                    end
+                | _ => raise Fail "invalid Binand terms given"
+            )
         | A.FRead fnam =>
             let
               val fname = eval fnam

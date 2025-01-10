@@ -93,7 +93,10 @@ end = struct
           | A.Char c => A.Char c
           | A.Real r => A.Real r
           | A.Exn s => A.Exn s
+          | A.Binor (t1, t3) => A.Binor (subst (x, t2, t1), subst (x, t2, t3))
+          | A.Binand (t1, t3) => A.Binand (subst (x, t2, t1), subst (x, t2, t3))
           | A.Let (t1, t2, t3) => raise Fail "Removing let bindings failed"
+          | A.Map (t1, t3) => A.Map (subst (x, t2, t1), subst (x, t2, t3))
         )
     end
       and sub_list (xt2list : (string * A.term * A.term list)) : A.term list =

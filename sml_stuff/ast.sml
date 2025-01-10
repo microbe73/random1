@@ -25,5 +25,8 @@ structure AST = struct
   | App of term * term
   | Let of term * term * term
   | FRead of term
+  | Binor of term * term
+  | Binand of term * term
+  | Map of term * term
 end
 

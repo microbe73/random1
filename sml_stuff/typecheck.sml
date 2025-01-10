@@ -187,6 +187,30 @@ end = struct
                     | _ => raise Fail "Concatenating non-lists"
                 )
               end
+          | AST.Binor (t1, t2) =>
+              let
+                val type1 = check (t1, env)
+                val type2 = check (t2, env)
+              in
+                (case type1
+                   of Types.List Types.Nat => 
+                        if type1 = type2 then type2
+                        else raise Fail "Invalid binor lists"
+                    | _ => raise Fail "Invalid binor type"
+                )
+              end
+          | AST.Binand (t1, t2) =>
+              let
+                val type1 = check (t1, env)
+                val type2 = check (t2, env)
+              in
+                (case type1
+                   of Types.List Types.Nat => 
+                        if type1 = type2 then type2
+                        else raise Fail "Invalid binand lists"
+                    | _ => raise Fail "Invalid binand type"
+                )
+              end
           | AST.List lst =>
               (case lst
                  of [] => raise Fail "Unable to type empty lists (may add later)"
@@ -208,6 +232,19 @@ end = struct
                       end
                   | _ => raise Fail "non variable in Let statement"
               )
+          | A.Map (t1, t2) =>
+              let
+                val type1 = check (t1, env)
+                val type2 = check (t2, env)
+              in
+                (case type1
+                   of Types.Func (dom, rng) =>
+                        if type2 = Types.List dom then
+                          Types.List rng
+                        else raise Fail "Invalid value given to map"
+                    | _ => raise Fail "Illegal type given to map"
+                )
+              end
           | A.Exn s =>
               raise Fail "Impossible"
           | A.FRead name =>

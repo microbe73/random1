@@ -97,5 +97,15 @@ structure Test = struct
  * val z = TypeCheck.check_term w;
  * val x = Eval.unlet w;
  * val y = Eval.eval x;
+ * val u = Scan.scan "Binor([0,1,0],[0,1])"
+ * val w = Parse.parse u;
+ * val z = TypeCheck.check_term w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
+ * val u = Scan.scan "Binand([0,0,1,1,0],[1,1,1,1,0,1,0,1,1])"
+ * val w = Parse.parse u;
+ * val z = TypeCheck.check_term w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval x;
  *)
 end
