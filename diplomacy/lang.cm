@@ -1,0 +1,13 @@
+Library
+  structure Move
+  structure Board
+  structure Parse
+  structure Game
+is
+  $/basis.cm
+  $/smlnj-lib.cm
+  parse.sml
+  move.sml
+  board.sml
+  game.sml
+
