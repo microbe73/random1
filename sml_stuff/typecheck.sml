@@ -245,6 +245,26 @@ end = struct
                     | _ => raise Fail "Illegal type given to map"
                 )
               end
+          | A.Filter (t1, t2) =>
+              let
+                val type1 = check (t1, env)
+                val type2 = check (t2, env)
+              in
+                (case type1
+                   of Types.Func (dom, Types.Bool) =>
+                        if type2 = Types.List dom then
+                          Types.List dom
+                        else raise Fail "Invalid value given to filter"
+                    | _ => raise Fail "Invalid filter function"
+                )
+              end
+          | AST.Pair (t1, t2) =>
+              let
+                val type1 = check (t1, env)
+                val type2 = check (t1, env)
+              in
+                Types.Pair(type1, type2)
+              end
           | A.Exn s =>
               raise Fail "Impossible"
           | A.FRead name =>

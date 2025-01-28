@@ -87,6 +87,7 @@ end = struct
           | A.Head t => A.Head (subst (x, t2, t))
           | A.List lst => A.List (sub_list (x, t2, lst))
           | A.FRead t => A.FRead (subst (x, t2, t))
+          | A.Pair (t1, t3) => A.Pair (subst (x, t2, t1), subst (x, t2, t3))
           | A.Nat n => A.Nat n
           | A.True => A.True
           | A.False => A.False
@@ -97,6 +98,7 @@ end = struct
           | A.Binand (t1, t3) => A.Binand (subst (x, t2, t1), subst (x, t2, t3))
           | A.Let (t1, t2, t3) => raise Fail "Removing let bindings failed"
           | A.Map (t1, t3) => A.Map (subst (x, t2, t1), subst (x, t2, t3))
+          | A.Filter (t1, t3) => A.Filter (subst (x, t2, t1), subst (x, t2, t3))
         )
     end
       and sub_list (xt2list : (string * A.term * A.term list)) : A.term list =

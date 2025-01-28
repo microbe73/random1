@@ -1,2 +1,2 @@
 Skeleton 5
-d2f2d"Char"ä¢LexicalToken"ad"Scan"jh1ad"T"gp1ÿh0
+d2f4d"Char"ä¢LexicalToken"d"Math"d"Real"ad"Scan"jh1ad"T"gp1ÿh0

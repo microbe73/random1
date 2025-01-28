@@ -6,4 +6,5 @@ structure Types = struct
   | Bool
   | List of typ
   | Func of typ * typ
+  | Pair of typ * typ
 end

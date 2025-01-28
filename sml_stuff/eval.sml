@@ -1,9 +1,18 @@
 structure Eval : sig
-  val eval : AST.term -> AST.term
+  val eval_gen : AST.term -> AST.term
   val unlet : AST.term -> AST.term
 end = struct
   structure A = AST
   structure S = Subst
+  (* TODO: Unmultilet, should take a let statement and turn the multiple lets
+   * into nested let expressions 
+   * When testing, unmultilet, then type check, then unlet (kinda scuffed tbh
+   * but like idk)
+   * *)
+   (* Also TODO: Implement first and second for pairs, should be very simple 
+    * Also Also TODO: Refactor parsing so it goes from looking extremely ugly
+    * to just slightly repetitive, it's literally the same thing 15 times
+    * *)
   fun unlet term =
     (case term
        of A.Let(x, t1, t2) =>
@@ -81,237 +90,299 @@ end = struct
                 (l1, l2)
             end
     )
-
-    
-  fun eval term =
-    (case term
-       of A.Add (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => A.Nat (n1 + n2)
-                  | (A.Real r1, A.Real r2) => A.Real (r1 + r2)
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Adding invalid terms"
+  fun eval_map ( fn_w_lst : AST.term * AST.term ) : AST.term list =
+    let
+      val func = #1(fn_w_lst)
+      val lst = #2(fn_w_lst)
+    in
+      (case lst
+         of A.List l1 =>
+              (case l1
+                 of [] => []
+                  | (t :: rest) =>
+                      (A.App (func, t) :: eval_map (func, A.List rest))
               )
-            end
-        | A.Mul (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => A.Nat (n1 * n2)
-                  | (A.Real r1, A.Real r2) => A.Real (r1 * r2)
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Multiplying invalid terms"
+         | _ => raise Fail "mapping on non-list"
+      )
+    end
+  fun eval_gen term =
+    let fun eval term =
+      (case term
+         of A.Add (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => A.Nat (n1 + n2)
+                    | (A.Real r1, A.Real r2) => A.Real (r1 + r2)
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Adding invalid terms"
+                )
+              end
+          | A.Mul (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => A.Nat (n1 * n2)
+                    | (A.Real r1, A.Real r2) => A.Real (r1 * r2)
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Multiplying invalid terms"
+                )
+              end
+          | A.Sub (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => if n1 - n2 >= 0 then A.Nat (n1 - n2)
+                                              else A.Exn "Negative result"
+                    | (A.Real r1, A.Real r2) => A.Real (r1 - r2)
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Subtracting invalid terms"
+                )
+              end
+          | A.Div (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => if n2 = 0 then A.Exn "Div by 0" else A.Nat (n1 div n2)
+                    | (A.Real r1, A.Real r2) => if  Real.== (r2, 0.0) then A.Exn "Div by 0.0"
+                    else A.Real (r1 / r2)
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Dividing invalid terms"
+                )
+              end
+          | A.And (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+              in
+                (case t1prime
+                   of A.True => t2prime
+                    | A.False => A.False
+                    | A.Exn s => A.Exn s
+                    | _ => raise Fail "Anding non-bool"
+                )
+              end
+          | A.Or (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+              in
+                (case t1prime
+                   of A.True => A.True
+                    | A.False => t2prime
+                    | A.Exn s => A.Exn s
+                    | _ => raise Fail "Oring non-bool"
+                )
+              end
+          | A.Head t1 =>
+              let
+                val t1prime = eval t1
+              in
+                (case t1prime
+                   of A.List (h :: l1) => eval h
+                    | A.List [] => A.Exn "List out of bounds"
+                    | A.Exn s => A.Exn s
+                    | _ => raise Fail "Head of non-list"
+                )
+              end
+          | A.If (t1, t2, t3) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val t3prime = eval t3
+              in
+                (case t1prime
+                   of A.True => t2prime
+                    | A.False => t3prime
+                    | A.Exn s => A.Exn s
+                    | _ => raise Fail "Non-bool in if conditional"
+                )
+              end
+          | A.Lt (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => if n1 < n2 then A.True else A.False
+                    | (A.Real r1, A.Real r2) => if r1 < r2 then A.True else
+                      A.False
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Lting invalid terms"
+                )
+              end
+          | A.Gt (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.Nat n1, A.Nat n2) => if n1 > n2 then A.True else A.False
+                    | (A.Real r1, A.Real r2) => if r1 > r2 then A.True else
+                      A.False
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Gting invalid terms"
+                )
+              end
+          | A.Concat (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+                val tprime = (t1prime, t2prime)
+              in
+                (case tprime
+                   of (A.List l1, A.List l2) => A.List (l1 @ l2)
+                    | (A.Exn s, _) => A.Exn s
+                    | (_, A.Exn s) => A.Exn s
+                    | _ => raise Fail "Concatenating non-lists"
+                )
+              end
+          | A.Comp (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+              in
+                (case t2prime
+                   of A.List l2 => 
+                        (case t1prime
+                           of A.Exn s => A.Exn s
+                            | _ => A.List (t1prime :: l2)
+                        )
+                    | A.Exn s => A.Exn s
+                    | _ => raise Fail "Comprehending on non-list"
+                )
+              end
+          | A.App (t1, t2) =>
+              let
+                val t1prime = eval t1
+                val t2prime = eval t2
+              in
+                (case t1prime
+                   of A.Lam (x, typ, term) => eval (S.sub (x, t2prime, term))
+                    | _ => raise Fail "Applying to non-function"
+                )
+              end
+          | A.Let (x, t1, t2) =>
+              let
+                val t1prime = eval t1
+              in
+                (case x
+                   of A.Var s => eval (S.sub (s, t1prime, t2))
+                    | _ => raise Fail "Let expression assigned to non-variable"
+                )
+              end
+          | A.True => term
+          | A.Nat n => term
+          | A.False => term
+          | A.Real r => term
+          | A.List lst => A.List (eval_list lst)
+          | A.Exn e => term
+          | A.Char c => term
+          | A.Pair (p1, p2) =>
+              let
+                val v1 = eval p1
+                val v2 = eval p2
+              in
+                AST.Pair(v1, v2)
+              end
+          | A.Lam (x, typ, t1) => term
+          | A.Var s => term
+          | A.Binor (l1, l2) => 
+              (case (l1, l2)
+                 of (AST.List lst1, AST.List lst2) =>
+                      let
+                        val new_lists = binmk (lst1, lst2)
+                        val list1 = #1(new_lists)
+                        val list2 = #2(new_lists)
+                      in
+                        AST.List (binor list1 list2)
+                      end
+                  | _ => raise Fail "invalid Binor terms given"
               )
-            end
-        | A.Sub (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => if n1 - n2 >= 0 then A.Nat (n1 - n2)
-                                            else A.Exn "Negative result"
-                  | (A.Real r1, A.Real r2) => A.Real (r1 - r2)
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Subtracting invalid terms"
+          | A.Binand (l1, l2) =>
+              (case (l1, l2)
+                 of (AST.List lst1, AST.List lst2) =>
+                      let
+                        val new_lists = binmk (lst1, lst2)
+                        val list1 = #1(new_lists)
+                        val list2 = #2(new_lists)
+                      in
+                        AST.List (binand list1 list2)
+                      end
+                  | _ => raise Fail "invalid Binand terms given"
               )
-            end
-        | A.Div (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => if n2 = 0 then A.Exn "Div by 0" else A.Nat (n1 div n2)
-                  | (A.Real r1, A.Real r2) => if  Real.== (r2, 0.0) then A.Exn "Div by 0.0"
-                  else A.Real (r1 / r2)
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Dividing invalid terms"
+          | A.Map (t1, t2) =>
+              let
+                val res_list = eval_map (t1, t2)
+              in
+                eval (AST.List res_list)
+              end
+          | A.Filter (t1, t2) =>
+              (case t2
+                 of A.List tlist =>
+                      let
+                        val filtered_list = eval_filter (t1, tlist)
+                      in
+                        eval (A.List filtered_list)
+                      end
+                | _ => raise Fail "filtering non-list"
               )
-            end
-        | A.And (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-            in
-              (case t1prime
-                 of A.True => t2prime
-                  | A.False => A.False
-                  | A.Exn s => A.Exn s
-                  | _ => raise Fail "Anding non-bool"
-              )
-            end
-        | A.Or (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-            in
-              (case t1prime
-                 of A.True => A.True
-                  | A.False => t2prime
-                  | A.Exn s => A.Exn s
-                  | _ => raise Fail "Oring non-bool"
-              )
-            end
-        | A.Head t1 =>
-            let
-              val t1prime = eval t1
-            in
-              (case t1prime
-                 of A.List (h :: l1) => eval h
-                  | A.List [] => A.Exn "List out of bounds"
-                  | A.Exn s => A.Exn s
-                  | _ => raise Fail "Head of non-list"
-              )
-            end
-        | A.If (t1, t2, t3) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val t3prime = eval t3
-            in
-              (case t1prime
-                 of A.True => t2prime
-                  | A.False => t3prime
-                  | A.Exn s => A.Exn s
-                  | _ => raise Fail "Non-bool in if conditional"
-              )
-            end
-        | A.Lt (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => if n1 < n2 then A.True else A.False
-                  | (A.Real r1, A.Real r2) => if r1 < r2 then A.True else
-                    A.False
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Lting invalid terms"
-              )
-            end
-        | A.Gt (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.Nat n1, A.Nat n2) => if n1 > n2 then A.True else A.False
-                  | (A.Real r1, A.Real r2) => if r1 > r2 then A.True else
-                    A.False
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Gting invalid terms"
-              )
-            end
-        | A.Concat (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-              val tprime = (t1prime, t2prime)
-            in
-              (case tprime
-                 of (A.List l1, A.List l2) => A.List (l1 @ l2)
-                  | (A.Exn s, _) => A.Exn s
-                  | (_, A.Exn s) => A.Exn s
-                  | _ => raise Fail "Concatenating non-lists"
-              )
-            end
-        | A.Comp (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-            in
-              (case t2prime
-                 of A.List l2 => 
-                      (case t1prime
-                         of A.Exn s => A.Exn s
-                          | _ => A.List (t1prime :: l2)
-                      )
-                  | A.Exn s => A.Exn s
-                  | _ => raise Fail "Comprehending on non-list"
-              )
-            end
-        | A.App (t1, t2) =>
-            let
-              val t1prime = eval t1
-              val t2prime = eval t2
-            in
-              (case t1prime
-                 of A.Lam (x, typ, term) => eval (S.sub (x, t2prime, term))
-                  | _ => raise Fail "Applying to non-function"
-              )
-            end
-        | A.Let (x, t1, t2) =>
-            let
-              val t1prime = eval t1
-            in
-              (case x
-                 of A.Var s => eval (S.sub (s, t1prime, t2))
-                  | _ => raise Fail "Let expression assigned to non-variable"
-              )
-            end
-        | A.True => term
-        | A.Nat n => term
-        | A.False => term
-        | A.Real r => term
-        | A.List lst => term
-        | A.Exn e => term
-        | A.Char c => term
-        | A.Lam (x, typ, t1) => term
-        | A.Var s => term
-        | A.Binor (l1, l2) => 
-            (case (l1, l2)
-               of (AST.List lst1, AST.List lst2) =>
-                    let
-                      val new_lists = binmk (lst1, lst2)
-                      val list1 = #1(new_lists)
-                      val list2 = #2(new_lists)
-                    in
-                      AST.List (binor list1 list2)
-                    end
-                | _ => raise Fail "invalid Binor terms given"
-            )
-        | A.Binand (l1, l2) =>
-            (case (l1, l2)
-               of (AST.List lst1, AST.List lst2) =>
-                    let
-                      val new_lists = binmk (lst1, lst2)
-                      val list1 = #1(new_lists)
-                      val list2 = #2(new_lists)
-                    in
-                      AST.List (binand list1 list2)
-                    end
-                | _ => raise Fail "invalid Binand terms given"
-            )
-        | A.FRead fnam =>
-            let
-              val fname = eval fnam
-              val filename = implode (trm_to_clist fname)
-              val filestream = TextIO.openIn(filename)
-              val fileout = readin filestream
-            in
-              AST.List (clist_to_trm fileout)
-            end handle IO.Io info => AST.Exn "Error opening file (check the name)"
-
-    )
-
+          | A.FRead fnam =>
+              let
+                val fname = eval fnam
+                val filename = implode (trm_to_clist fname)
+                val filestream = TextIO.openIn(filename)
+                val fileout = readin filestream
+              in
+                AST.List (clist_to_trm fileout)
+              end handle IO.Io info => AST.Exn "Error opening file (check the name)"
+      )
+    and eval_list term_list =
+      (case term_list
+         of [] => []
+          | (t :: rest) => (eval t :: eval_list rest)
+      )
+    and eval_filter (term_list : (A.term * A.term list)) : A.term list =
+      let
+        val func = #1(term_list)
+        val tlist = #2(term_list)
+      in
+        (case tlist
+           of [] => []
+            | (trm :: rest) =>
+                let
+                  val res = eval (A.App (func, trm))
+                in
+                  (case res
+                     of A.True => (trm :: eval_filter (func, rest))
+                      | A.False => eval_filter (func, rest)
+                      | _ => raise Fail "Non-boolean function for filter"
+                  )
+                end
+        )
+      end
+    in
+      eval term
+    end
 end
 

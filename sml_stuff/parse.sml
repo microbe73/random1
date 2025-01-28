@@ -60,6 +60,23 @@ end = struct
                   )
             | _ => raise Fail "Unable to parse Lambda type"
           )
+      and nextTerm2 (op_w_toks : (A.term * A.term -> A.term) * T.token list) :
+        A.term * T.token list  =
+        let
+          val oper = #1(op_w_toks)
+          val toks = #2(op_w_toks)
+        in
+          (case nextTerm toks
+             of NONE => raise Fail "Parse error (unbound dyad)"
+              | SOME (t1, T.Comma :: toks1) =>
+                  (case nextTerm toks1
+                     of NONE => raise Fail "Parse error (dyad second term)"
+                      | SOME (t2, T.RPar :: toks2) => (oper (t1, t2), toks2)
+                      | _ => raise Fail "Pars error (closing parentheses)"
+                  )
+              | _ => raise Fail "Parse error (dyad second term)"
+          )
+        end
       and nextTerm tList =
         (case tList
            of [] => NONE
@@ -68,17 +85,8 @@ end = struct
             | (T.Nat n :: toks) => SOME (A.Nat n, toks)
             | (T.Char c :: toks) => SOME (A.Char c, toks)
             | (T.Real r :: toks) => SOME (A.Real r, toks)
-            | (T.Sub :: T.LPar :: toks) => 
-                 (case nextTerm toks
-                     of NONE => raise Fail "Parse error (unbound sub)"
-                      | SOME (t1, T.Comma :: toks1) =>
-                          (case nextTerm toks1
-                             of NONE => raise Fail "Parse error (sub second term) "
-                              | SOME (t2, T.RPar :: toks2) => SOME (A.Sub(t1,t2), toks2)
-                              | _ => raise Fail "Pars error (closing parentheses)"
-                          )
-                      | _ => raise Fail "Parse error (sub second term)"
-                    )
+            | (T.Sub :: T.LPar :: toks) =>
+                SOME (nextTerm2 (A.Sub, toks))
             | (T.Or :: T.LPar :: toks) => 
                   (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound Or)"
@@ -90,7 +98,18 @@ end = struct
                           )
                       | _ => raise Fail "Parse error (Or second term)"
                     )
-            | (T.If :: T.LPar :: toks) => 
+            | (T.Pair :: T.LPar :: toks) => 
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound Pair)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (Pair second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Pair(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (Pair second term)"
+                    )
+            | (T.If :: T.LPar :: toks) =>
                (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound If)"
                       | SOME (t1, T.Comma :: toks1) =>
@@ -98,7 +117,7 @@ end = struct
                              of NONE => raise Fail "Parse error (If second term) "
                               | SOME (t2, T.Comma :: toks2) => 
                                    (case nextTerm toks2
-                                      of NONE => raise Fail 
+                                      of NONE => raise Fail
                                       "Parse error (If third term)"
                                        | SOME (t3, T.RPar :: toks3) =>
                                             SOME (A.If(t1, t2, t3), toks3)
@@ -109,6 +128,28 @@ end = struct
                           )
                       | _ => raise Fail "Parse error (If second term)"
                   )
+            (*
+             * Get this for free with pairs!
+            | (T.Let :: T.LPar :: T.LBrac :: toks) =>
+                (case (parseList (A.List [], toks))
+                  of NONE => raise Fail "Parse error (unbound Let)"
+                    | SOME (t1, T.Comma :: toks1) =>
+                        (case nextTerm toks1
+                           of NONE => raise Fail "Parse error (Let third term)"
+                            | SOME (t2, T.Comma :: toks2) =>
+                                (case nextTerm toks2
+                                   of NONE => raise Fail
+                                   "Parse error (Let third term)"
+                                    | SOME (t3, T.RPar :: toks3) =>
+                                        SOME (A.Let (t1, t2, t3), toks3)
+                                    | _ => raise Fail
+                                    "Par error (closing parentheses)"
+                                  )
+                            | _ => raise Fail "Pars error (closing parentheses)"
+                        )
+                    | _ => raise Fail "Parse error (closing parentheses)"
+                )
+            *)
             | (T.Let :: T.LPar :: toks) => 
                (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound let)"
@@ -281,6 +322,28 @@ end = struct
                               | _ => raise Fail "Pars error (closing parentheses)"
                           )
                       | _ => raise Fail "Parse error (Binand second term)"
+                    )
+            | (T.Map :: T.LPar :: toks) =>
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound Map)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (Map second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Map(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (Map second term)"
+                    )
+            | (T.Filter :: T.LPar :: toks) =>
+                  (case nextTerm toks
+                     of NONE => raise Fail "Parse error (unbound filter)"
+                      | SOME (t1, T.Comma :: toks1) =>
+                          (case nextTerm toks1
+                             of NONE => raise Fail "Parse error (filter second term) "
+                              | SOME (t2, T.RPar :: toks2) => SOME (A.Filter(t1,t2), toks2)
+                              | _ => raise Fail "Pars error (closing parentheses)"
+                          )
+                      | _ => raise Fail "Parse error (filter second term)"
                     )
             | _ => raise Fail "unable to parse tokens "
          )

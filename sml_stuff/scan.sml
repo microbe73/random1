@@ -120,6 +120,10 @@ end = struct
                   cs)
              | (#"B" :: #"i" :: #"n" :: #"a" :: #"n" :: #"d" :: cs) =>
                  SOME (T.Binand, cs)
+             | (#"M" :: #"a" :: #"p" :: cs) => SOME (T.Map, cs)
+             | (#"F" :: #"i" :: #"l" :: #"t" :: #"e" :: #"r" :: cs) =>
+                 SOME (T.Filter, cs)
+             | (#"P" :: #"a" :: #"i" :: #"r" :: cs) => SOME (T.Pair, cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE

@@ -28,5 +28,9 @@ structure AST = struct
   | Binor of term * term
   | Binand of term * term
   | Map of term * term
+  | Filter of term * term
+  | Pair of term * term
+  | Fst of term
+  | Snd of term
 end
 
