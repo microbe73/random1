@@ -132,7 +132,20 @@ structure Test = struct
  * val z = TypeCheck.check_term w;
  * val x = Eval.unlet w;
  * val y = Eval.eval_gen x;
+ * val u = Scan.scan "Fst(Pair(Add(2,3), Mul(R5.3, R5.7)))"
+ * val w = Parse.parse u;
+ * val z = TypeCheck.check_term w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval_gen x;
+ * val u = Scan.scan "Snd(Pair(Add(R2.0,R3.1), Mul(5, 7)))"
+ * val w = Parse.parse u;
+ * val z = TypeCheck.check_term w;
+ * val x = Eval.unlet w;
+ * val y = Eval.eval_gen x;
  * What I want to be able to do basically
- * val u = Scan.scan "Let(Pair([Vx,Vy,Vz,Va],[1, R3.7, 9, Add(5, Vx)]),Pair(Vy, Mul(Vx, (Add(Vz, Va)))))"
+ * wait i did not think this through i literally don't need pairs at all
+ * what am i doing lol, its nice to have pairs i suppose so its fine
+ * val u = Scan.scan "Let([Vx,Vy,Vz,Va],[1,R3.7,9,Add(5,7)],Pair(Vy, Mul(Vx, Add(Vz, Va))))"
+ * val u = Scan.scan "Let([Vx], [7], Vx)"
  *)
 end

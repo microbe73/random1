@@ -1,6 +1,7 @@
 structure Eval : sig
   val eval_gen : AST.term -> AST.term
   val unlet : AST.term -> AST.term
+  val unmultilet : AST.term -> AST.term
 end = struct
   structure A = AST
   structure S = Subst
@@ -9,10 +10,29 @@ end = struct
    * When testing, unmultilet, then type check, then unlet (kinda scuffed tbh
    * but like idk)
    * *)
-   (* Also TODO: Implement first and second for pairs, should be very simple 
-    * Also Also TODO: Refactor parsing so it goes from looking extremely ugly
+   (* Also TODO: Refactor parsing so it goes from looking extremely ugly
     * to just slightly repetitive, it's literally the same thing 15 times
     * *)
+  fun unmultilet term =
+    (case term
+       of A.Let (xs, t1, t2) =>
+            (case (xs, t1)
+               of (AST.List vrnms, AST.List vls) =>
+                    (case (vrnms, vls)
+                       of ([], []) => t2
+                        | (name :: rest1, []) =>
+                            raise Fail "More names given than assigned"
+                        | ([], vlu :: rest2) =>
+                            raise Fail "More variables set without name"
+                        | (name :: restnms, vlu :: restvals) =>
+                            (A.Let(name, vlu,
+                            unmultilet (A.Let(A.List restnms, A.List restvals,
+                            t2))))
+                    )
+                | _ => raise Fail "Variable assignment invalid"
+            )
+        | _ => term
+    )
   fun unlet term =
     (case term
        of A.Let(x, t1, t2) =>
@@ -298,12 +318,30 @@ end = struct
           | A.List lst => A.List (eval_list lst)
           | A.Exn e => term
           | A.Char c => term
-          | A.Pair (p1, p2) =>
+          | A.Pair (l1, r2) =>
               let
-                val v1 = eval p1
-                val v2 = eval p2
+                val v1 = eval l1
+                val v2 = eval r2
               in
                 AST.Pair(v1, v2)
+              end
+          | A.Fst (p1) =>
+              let
+                val v1 = eval p1
+              in
+                (case v1
+                   of AST.Pair (v1, v2) => v1
+                    | _ => raise Fail "Fst of non-pair"
+                )
+              end
+          | A.Snd (p1) =>
+              let
+                val v1 = eval p1
+              in
+                (case v1
+                   of AST.Pair (v1, v2) => v2
+                    | _ => raise Fail "Snd of non-pair"
+                )
               end
           | A.Lam (x, typ, t1) => term
           | A.Var s => term

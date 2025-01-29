@@ -124,6 +124,8 @@ end = struct
              | (#"F" :: #"i" :: #"l" :: #"t" :: #"e" :: #"r" :: cs) =>
                  SOME (T.Filter, cs)
              | (#"P" :: #"a" :: #"i" :: #"r" :: cs) => SOME (T.Pair, cs)
+             | (#"F" :: #"s" :: #"t" :: cs) => SOME (T.Fst, cs)
+             | (#"S" :: #"n" :: #"d" :: cs) => SOME (T.Snd, cs)
              | _ => raise Fail "Unable to parse token"
                  )
       | [] => NONE

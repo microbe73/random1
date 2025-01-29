@@ -199,6 +199,24 @@ end = struct
                     | _ => raise Fail "Invalid binor type"
                 )
               end
+          | AST.Fst p1 =>
+              let
+                val type1 = check (p1, env)
+              in
+                (case type1
+                   of Types.Pair (ty1, ty2) => ty1
+                    | _ => raise Fail "First of non-pair"
+                )
+              end
+          | AST.Snd p1 =>
+              let
+                val type1 = check (p1, env)
+              in
+                (case type1
+                   of Types.Pair (ty1, ty2) => ty2
+                    | _ => raise Fail "Second of non-pair"
+                )
+              end
           | AST.Binand (t1, t2) =>
               let
                 val type1 = check (t1, env)
@@ -261,7 +279,7 @@ end = struct
           | AST.Pair (t1, t2) =>
               let
                 val type1 = check (t1, env)
-                val type2 = check (t1, env)
+                val type2 = check (t2, env)
               in
                 Types.Pair(type1, type2)
               end

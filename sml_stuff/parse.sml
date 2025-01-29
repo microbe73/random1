@@ -109,6 +109,18 @@ end = struct
                           )
                       | _ => raise Fail "Parse error (Pair second term)"
                     )
+            | (T.Fst :: T.LPar :: toks) =>
+                (case nextTerm toks
+                   of NONE => raise Fail "Parse error (unbound First)"
+                    | SOME (t1, T.RPar :: toks1) => SOME (A.Fst(t1), toks1)
+                    | _ => raise Fail "Parse error (closing parentheses)"
+                )
+            | (T.Snd :: T.LPar :: toks) =>
+                (case nextTerm toks
+                   of NONE => raise Fail "Parse error (unbound Second)"
+                    | SOME (t1, T.RPar :: toks1) => SOME (A.Snd(t1), toks1)
+                    | _ => raise Fail "Parse error (closing parentheses)"
+                )
             | (T.If :: T.LPar :: toks) =>
                (case nextTerm toks
                      of NONE => raise Fail "Parse error (unbound If)"
