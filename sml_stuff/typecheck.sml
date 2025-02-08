@@ -2,7 +2,7 @@ structure TypeCheck : sig
   type env
   val lookup : (string * env) -> Types.typ
   val add_var : (string * Types.typ * env) -> env
-  val check_term : AST.term -> Types.typ
+  val check_term : AST.term * env -> Types.typ
 end = struct
   type env = (string * Types.typ) list
   (* efficiency is once again a skill issue *)
@@ -26,7 +26,7 @@ end = struct
     in
       (new_name, new_type) :: env
     end
-  fun check_term t =
+  fun check_term t_w_env =
     let fun check (term_w_env : AST.term * ((string * Types.typ) list)) : Types.typ =
       let
         val term = #1(term_w_env)
@@ -321,6 +321,6 @@ end = struct
           )
       end
     in
-      check (t, [])
+      check t_w_env
     end
 end

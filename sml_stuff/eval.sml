@@ -1,18 +1,10 @@
 structure Eval : sig
   val eval_gen : AST.term -> AST.term
-  val unlet : AST.term -> AST.term
+  val unlet : AST.term * TypeCheck.env -> AST.term
   val unmultilet : AST.term -> AST.term
 end = struct
   structure A = AST
   structure S = Subst
-  (* TODO: Unmultilet, should take a let statement and turn the multiple lets
-   * into nested let expressions 
-   * When testing, unmultilet, then type check, then unlet (kinda scuffed tbh
-   * but like idk)
-   * *)
-   (* Also TODO: Refactor parsing so it goes from looking extremely ugly
-    * to just slightly repetitive, it's literally the same thing 15 times
-    * *)
   fun unmultilet term =
     (case term
        of A.Let (xs, t1, t2) =>
@@ -33,29 +25,32 @@ end = struct
             )
         | _ => term
     )
-  fun unlet term =
-    (case term
-       of A.Let(x, t1, t2) =>
-            let
-              val t2prime = unlet t2
-              val t1prime = unlet t1
-              val typ = TypeCheck.check_term t1prime
-            in
-              (case x
-                 of A.Var s => A.App (A.Lam (s, typ, t2prime), t1prime)
-                  | _ => raise Fail "Non-variable assigned to let expression"
-              )
-            end
-        | _ => term (* means that let expressions are not allowed unless they
-        are the top level expressions which I suppose is fine *)
-    )
+  fun unlet (term_w_env : AST.term * TypeCheck.env) : AST.term =
+    let
+      val term = #1(term_w_env)
+      val env = #2(term_w_env)
+    in
+      (case term
+         of A.Let(A.Var s, t1, t2) =>
+              let
+                val t1prime = unlet (t1, env)
+                val typ = TypeCheck.check_term (t1prime, env)
+                val new_env = TypeCheck.add_var (s, typ, env)
+                val t2prime = unlet (t2, new_env)
+              in
+                A.App (A.Lam (s, typ, t2prime), t1prime)
+              end
+          | A.Let (x, t1, t2) => raise Fail "Let with non-variable"
+          | _ => term
+      )
+    end
   fun trm_to_clist trm =
     (case trm
        of A.List l1 =>
             (case l1
                of (c :: rest) =>
                     (case c
-                       of A.Char c1 => ([c1] @ (trm_to_clist (A.List rest)))
+                       of A.Char c1 => (c1 :: (trm_to_clist (A.List rest)))
                         | _ => raise Fail "non-name given"
                     )
                 | [] => []
@@ -66,7 +61,7 @@ end = struct
   fun clist_to_trm clist =
     (case clist
        of [] => []
-        | (c :: rest) => [AST.Char c] @ clist_to_trm rest
+        | (c :: rest) => AST.Char c :: clist_to_trm rest
     )
   fun binor l1 l2 =
     (case (l1, l2)
@@ -109,6 +104,12 @@ end = struct
               else
                 (l1, l2)
             end
+    )
+  fun bin_norm lst =
+    (case lst
+       of [] => []
+        | (AST.Nat 0 :: rest) => bin_norm rest
+        | _ => lst
     )
   fun eval_map ( fn_w_lst : AST.term * AST.term ) : AST.term list =
     let
@@ -353,7 +354,7 @@ end = struct
                         val list1 = #1(new_lists)
                         val list2 = #2(new_lists)
                       in
-                        AST.List (binor list1 list2)
+                        AST.List (bin_norm (binor list1 list2))
                       end
                   | _ => raise Fail "invalid Binor terms given"
               )
@@ -365,7 +366,7 @@ end = struct
                         val list1 = #1(new_lists)
                         val list2 = #2(new_lists)
                       in
-                        AST.List (binand list1 list2)
+                        AST.List (bin_norm (binand list1 list2))
                       end
                   | _ => raise Fail "invalid Binand terms given"
               )
