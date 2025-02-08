@@ -125,7 +125,7 @@ create newl 1 allot
 : clearall initial-mem @ here - allot ;
 ( save changes )
 : w       rcurr clean 0 num-lines @ 1 u+do gcline @ gclen @ tuck 1 - fh @
-          write-line throw n-line + loop 0 fh @ resize-file close deinit clearall 0 num-lines ! ;
+          write-line throw n-line + loop 0 fh @ resize-file close deinit clearall 0 num-lines ! 0 fhead !  ;
 
 ( line-num -- c-addr len ) ( copy a line )
 : c       addify gcline @ gclen @ ;
@@ -153,7 +153,7 @@ program loses segmentation )
           0= if line-num . dup . 59 emit endif 1 + dup gclen @ 1 - >= until drop ;
 
 ( c1 u1 line-start line-end )
-: scmul swap 1 + u+do 2dup i sc loop drop drop ;
+: scmul 1 + swap u+do 2dup i sc loop drop drop ;
 ( also inserted the newlines after reloading this code and using nline which I wrote in this editor yeaaaaaaaaa )
 : yay s" yay!" type ;
 create qmark 1 allot 34 qmark !
