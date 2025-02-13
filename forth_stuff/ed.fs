@@ -5,6 +5,7 @@ variable num-lines ( int pointer )
 variable fhead ( struct pointer )
 variable initial-mem
 variable last-edit ( struct pointer )
+variable clear-undo ( when performing an edit after an undo, the entire undo list needs to be cleared )
 256 Constant max-line
 create line-buffer max-line allot
 
@@ -15,6 +16,7 @@ begin-structure linelist ( -- u )
 end-structure
 ( The next step: undo feature. The way the editor works right now this is actually "free" in a memory sense, since we are re-assigning memory a bunch already
  also it is somewhat clear to me how to do it )
+( redoing can also happen after this maybe )
 
 ( I think by induction these structures only need to assume they were the most recent edit so line number stuff shouldnt be an issue )
 begin-structure undonode
@@ -25,12 +27,16 @@ begin-structure undonode
     field: undonode-len ( int* )
 end-structure
 
-
+( clear the undo list )
+: unclear   clear-undo @ if begin
+            last-edit @ dup dup while undonode-prevedit @ last-edit ! free throw repeat
+            0 clear-undo ! 2drop then ;
 
 : bfill   max-line 0 u+do line-buffer i + 0 swap ! loop ;
 bfill
 0 num-lines !
-
+0 last-edit !
+0 clear-undo !
 ( QOL WORDS )
 ( []  -- linelist-line [ gets pointer to current line's text ] )
 : gcline  curr-line @ linelist-line ;
@@ -76,7 +82,7 @@ bfill
 : f-load  begin bfill line-buffer max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat bfill ;
 
 ( c-addr u -- [load a file into memory] )
-: init    open lat fhead ! rcurr clean f-load ;
+: init    open lat fhead ! rcurr clean f-load drop ;
 
 : deinit  rcurr begin curr-line @ dup linelist-next @ swap free throw dup curr-line ! until ;
 
@@ -95,14 +101,14 @@ bfill
 ( c-addr u c-num -- u c-num [moves the u characters offset by c places into the line buffer] )
 : newin     dup >r line-buffer + swap dup >r cmove r> r> ;
 ( u c-num -- new-len [inserts the last part into the line buffer] )
-: postin    { u c-num } gcline @ c-num + line-buffer c-num u + + 
+: postin    { u c-num } gcline @ c-num + line-buffer c-num u + +
             gclen @ c-num - cmove gclen @ u + ;
 ( c-addr u -- new-addr [move an input string into a new address, null-terminate it] )
 : mhere     { len } here len allot tuck len cmove 0 c, ;
 : unat      undonode allocate throw ;
 ( lnum n -- [creates a new undonode, adds it to list] )
-: usetup    unat tuck undonode-edittype ! gcline @ over undonode-textptr ! gclen @ over undonode-len !
-            over over undonode-linenum ! nip last-edit @ over undonode-prevedit ! last-edit ! ;
+: usetup    unclear .s unat tuck undonode-edittype ! gcline @ over undonode-textptr ! gclen @ over undonode-len !
+            over over undonode-linenum ! nip last-edit @ over undonode-prevedit ! last-edit ! .s ;
 ( INSERTION WORDS )
 ( c-addr u line-num -- ) ( replace line with other text )
 : in        dup addify 3 usetup { len } len mhere gcline ! len 1 + gclen ! ;
@@ -125,27 +131,27 @@ bfill
 
 ( UNDO WORDS )
 
-: undid     last-edit @ undonode-prevedit last-edit ! ;
+: undid     last-edit @ dup undonode-prevedit @ last-edit ! free throw 1 clear-undo ! ;
 ( undonode -- )
-: uni0      d0 ;
+: uni0      drop fhead @ fhead @ linelist-next @ fhead ! free throw num-lines -- ;
 : und0      lat over undonode-textptr @ over linelist-line ! over undonode-len @ over linelist-len ! \ same as dl just with fhead instead
             dup linelist-next fhead @ ! fhead ! drop num-lines ++ ; \ set the new line to be in fhead, set its next line to be current fhead
-: unin      dup undonode-linenum @ addify dup undonode-textptr @ gcline ! undonode-len gclen ! ;
+: unin      dup undonode-linenum @ addify dup undonode-textptr @ gcline ! undonode-len @ gclen ! ;
 : unia      undonode-linenum @ 1 + del ;
 : undl      dup undonode-linenum @ 1 - addify lat over undonode-textptr @ over linelist-line ! \ allocate new linelist, set text to be stored, also addify prev line
             over undonode-len @ over linelist-len ! gcnext @ over linelist-next ! gcnext ! drop num-lines ++ ;
 ( : unsr    unin )
 ( : unic    unin )
-( undonode -- )
-: undo      dup dup undonode-edittype @
+(  -- )
+: undo      last-edit @ dup undonode-edittype @
             case
-                1 of uni0 undid endof
-                2 of und0 undid endof
-                3 of unin undid endof
-                4 of unia undid endof
-                5 of undl undid endof
+                1 of uni0 endof
+                2 of und0 endof
+                3 of unin endof
+                4 of unia endof
+                5 of undl endof
                 drop s" didn't undo anything might be error but the experienced programmer will know what's wrong" type
-            endcase ;
+            endcase undid ;
 
 create newl 1 allot
 10 newl !
