@@ -1,4 +1,3 @@
-new i0 dropped?
 didn't break basics now?
 making sure in still works
 trying out trying trying out ic2to also ic2 in the middleia2 here
