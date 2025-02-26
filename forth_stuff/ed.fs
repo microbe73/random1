@@ -6,6 +6,7 @@ variable fhead ( struct pointer )
 variable initial-mem
 variable last-edit ( struct pointer )
 variable clear-undo ( when performing an edit after an undo, the entire undo list needs to be cleared )
+variable clear-redo ( if a redo is performed, set this so we don't clear the undo list. )
 variable next-redo ( struct pointer )
 256 Constant max-line
 create line-buffer max-line allot
@@ -15,9 +16,9 @@ begin-structure linelist ( -- u )
     field: linelist-line  ( intlist -- addr2 ) ( string pointer [char*[]] )
     field: linelist-len ( intlist -- addr3 ) ( int pointer )
 end-structure
-( redoing can also happen after this maybe )
 
-( I think by induction these structures only need to assume they were the most recent edit so line number stuff shouldnt be an issue )
+
+
 begin-structure editnode
     field: editnode-edittype ( int* )
     field: editnode-prevedit ( editnode* )
@@ -26,13 +27,13 @@ begin-structure editnode
     field: editnode-len ( int* )
 end-structure
 
-( clear the redo list )
-: reclear   begin clear-undo @ dup dup while editnode-prevedit @ last-edit ! free throw repeat
-            2drop ;
-( clear the undo list )
+( clear the redo list [all the undonodes are already freed so its fine to do this no memory leak] )
+( since the redo words call the insertion words directly, the undo list is cleared meaning the redo
+list is also gone )
+( clear the undo list [ -- ] )
 : unclear   clear-undo @ if begin
             last-edit @ dup dup while editnode-prevedit @ last-edit ! free throw repeat
-            0 clear-undo ! 2drop then reclear ;
+            0 clear-undo ! 0 next-redo ! 2drop then ;
 : bfill   max-line 0 u+do line-buffer i + 0 swap ! loop ;
 bfill
 0 num-lines !
@@ -107,19 +108,24 @@ bfill
             gclen @ c-num - cmove gclen @ u + ;
 ( c-addr u -- new-addr [move an input string into a new address, null-terminate it] )
 : mhere     { len } here len allot tuck len cmove 0 c, ;
-: unat      editnode allocate throw ;
+: enat      editnode allocate throw ;
 ( lnum n -- [creates a new editnode, adds it to list] )
-: usetup    unclear unat tuck editnode-edittype ! gcline @ over editnode-textptr ! gclen @ over editnode-len !
+: usetup    unclear enat tuck editnode-edittype ! gcline @ over editnode-textptr ! gclen @ over editnode-len !
             over over editnode-linenum ! nip last-edit @ over editnode-prevedit ! last-edit ! ;
+
+( the edit nodes for non-destructive text insertions need to be made differently )
+: uisetup   unclear enat tuck editnode-edittype ! tuck editnode-linenum ! over swap tuck
+            editnode-len ! rot tuck over editnode-textptr ! last-edit @ over editnode-prevedit !
+            last-edit ! swap ;
 ( INSERTION WORDS )
 ( c-addr u line-num -- ) ( replace line with other text )
 : in        dup addify 3 usetup { len } len mhere gcline ! len 1 + gclen ! ;
 
-: ia        dup addify 4 usetup { len } len mhere lat gcnext @ over gcnext ! over linelist-next ! len 1 + over
+: ia        dup addify 4 uisetup { len } len mhere lat gcnext @ over gcnext ! over linelist-next ! len 1 + over
             linelist-len ! linelist-line ! num-lines ++ ;
 
 ( c-addr u ) ( insert text before the first line )
-: i0        rcurr 1 1 usetup { len } len mhere lat tuck linelist-line ! fhead @ over linelist-next !
+: i0        rcurr 1 1 uisetup { len } len mhere lat tuck linelist-line ! fhead @ over linelist-next !
             len 1 + over linelist-len ! fhead ! num-lines ++ ;
 
 ( c-addr u line-num c-num -- ) ( insert text at a specific character in a line )
@@ -139,14 +145,15 @@ bfill
 : uni0      drop fhead @ fhead @ linelist-next @ fhead ! free throw num-lines -- ;
 : und0      lat over editnode-textptr @ over linelist-line ! over editnode-len @ over linelist-len ! \ same as dl just with fhead instead
             fhead @ over linelist-next ! fhead ! drop num-lines ++ ; \ set the new line to be in fhead, set its next line to be current fhead
-: unin      dup editnode-linenum @ addify dup editnode-textptr @ gcline ! editnode-len @ gclen ! ;
+: unin      dup editnode-linenum @ addify dup editnode-textptr @ over gcline @ swap editnode-textptr !
+            gcline ! dup editnode-len @ over gclen @ swap 1 - editnode-len ! gclen ! drop ;
 : unia      editnode-linenum @ addify gcnext @ gcnext @ linelist-next @ gcnext ! free throw num-lines -- ;
 : undl      dup editnode-linenum @ 1 - addify lat over editnode-textptr @ over linelist-line ! \ allocate new linelist, set text to be stored, also addify prev line
             over editnode-len @ over linelist-len ! gcnext @ over linelist-next ! gcnext ! drop num-lines ++ ;
 
-: rei0      editnode-textptr @ editnode-len @ i0 ;
-: rein      editnode-textptr @ editnode-len @ editnode-linenum @ in ;
-: reia      editnode-textptr @ editnode-len @ editnode-linenum @ ia ;
+: rei0      dup editnode-textptr @ swap editnode-len @ i0 ;
+: rein      dup editnode-textptr @ swap dup editnode-len @ swap editnode-linenum @ in ;
+: reia      dup editnode-textptr @ swap dup editnode-len @ swap editnode-linenum @ ia ;
 : redl      editnode-linenum @ del ;
 
 : undo      last-edit @ dup editnode-edittype @
@@ -159,7 +166,7 @@ bfill
                 drop s" didn't undo anything might be error but the experienced programmer will know what's wrong" type
             endcase undid ;
 
-: redo      next-redo @ dup editnode-edittype @
+: redo      0 clear-undo ! next-redo @ dup editnode-edittype @
             case
                 1 of rei0 endof
                 2 of d0   endof

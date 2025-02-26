@@ -3,6 +3,7 @@ making sure in still works
 trying out trying trying out ic2to also ic2 in the middleia2 here
 I domaybe an ic2 without weird character? think it would be nice if it worked ykyk
 I think it writes on extrand does ic still work?a characters equal to the number of characters removed from the line
+text
 speaking of bad memory practice and copium I am also going to be on the having one extra 0 at the end was the issue copium for as long as I can as well
 I'm gonna be on the not closing the file was the issue copium for as long as I can
 it's so much better now that the actual saving bug is fixed lol
