@@ -1,4 +1,4 @@
-( Editor Variables )
+( editor Variables )
 variable fh ( file handler )
 variable curr-line ( struct pointer, @ needed to get struct  )
 variable num-lines ( int pointer )
@@ -27,14 +27,12 @@ begin-structure editnode
     field: editnode-len ( int* )
 end-structure
 
-( clear the redo list [all the undonodes are already freed so its fine to do this no memory leak] )
-( since the redo words call the insertion words directly, the undo list is cleared meaning the redo
-list is also gone )
+
 ( clear the undo list [ -- ] )
 : unclear   clear-undo @ if begin
             last-edit @ dup dup while editnode-prevedit @ last-edit ! free throw repeat
             0 clear-undo ! 0 next-redo ! 2drop then ;
-: bfill   max-line 0 u+do line-buffer i + 0 swap ! loop ;
+: bfill     max-line 0 u+do line-buffer i + 0 swap ! loop ;
 bfill
 0 num-lines !
 0 last-edit !
@@ -42,59 +40,59 @@ bfill
 0 clear-undo !
 ( QOL WORDS )
 ( []  -- linelist-line [ gets pointer to current line's text ] )
-: gcline  curr-line @ linelist-line ;
-: gclen   curr-line @ linelist-len ;
-: gcnext  curr-line @ linelist-next ;
+: gcline    curr-line @ linelist-line ;
+: gclen     curr-line @ linelist-len ;
+: gcnext    curr-line @ linelist-next ;
 
 ( set curr-line back to start )
-: rcurr   fhead @ curr-line ! ;
+: rcurr     fhead @ curr-line ! ;
 ( -- [sets curr-line's fields to 0] )
-: nullify 0 gcline ! 0 gclen ! 0 gcnext ! ;
+: nullify   0 gcline ! 0 gclen ! 0 gcnext ! ;
 ( sets curr-line to the next line )
-: n-line  curr-line @ linelist-next @ curr-line ! ;
+: n-line    curr-line @ linelist-next @ curr-line ! ;
 
 ( line-num -- [sets curr-line to the addressed line] )
-: addify  rcurr 1 u+do n-line loop ;
+: addify    rcurr 1 u+do n-line loop ;
 
 ( ptr -- [increase/decrease the value pointed to by 1] )
-: ++      dup @ 1 + swap ! ;
-: --      dup @ 1 - swap ! ;
-: gl 1 num-lines @ 1 - ;
+: ++        dup @ 1 + swap ! ;
+: --        dup @ 1 - swap ! ;
+: gl        1 num-lines @ 1 - ;
 
-: itoa     48 + emit ;
-: get-dig  0 swap begin 10 / swap 1 + swap dup 0= until drop ;
-: get-plc  get-dig 1 tuck u+do 10 * loop ;
+: itoa      48 + emit ;
+: get-dig   0 swap begin 10 / swap 1 + swap dup 0= until drop ;
+: get-plc   get-dig 1 tuck u+do 10 * loop ;
 ( num -- [prints out the number to stdout] )
-: itos     dup get-dig 0 u+do dup get-plc 2dup / itoa mod loop drop ;
+: itos      dup get-dig 0 u+do dup get-plc 2dup / itoa mod loop drop ;
 
 
 
 ( FILE I/O OPERATIONS )
 ( addr u -- [Opens the file] )
-: open    r/w open-file throw fh ! ;
+: open      r/w open-file throw fh ! ;
 
-: close   fh @ close-file throw ;
+: close     fh @ close-file throw ;
 
-: clean   0 0 fh @ reposition-file throw ;
+: clean     0 0 fh @ reposition-file throw ;
 
-: lat     linelist allocate throw ;
+: lat       linelist allocate throw ;
 
-: l-load  { len } align here line-buffer align here len allot len cmove gcline ! len gclen ! ( set values for this line )
-          lat gcnext ! gcnext @ curr-line !  nullify ( move pointer to next line, set to 0s to avoid weird bugs ) ;
+: l-load    { len } align here line-buffer align here len allot len cmove gcline ! len gclen ! ( set values for this line )
+            lat gcnext ! gcnext @ curr-line !  nullify ( move pointer to next line, set to 0s to avoid weird bugs ) ;
 
-: f-load  begin bfill line-buffer max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat bfill ;
+: f-load    begin bfill line-buffer max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat bfill ;
 
 ( c-addr u -- [load a file into memory] )
-: init    open lat fhead ! rcurr clean f-load drop ;
+: init      open lat fhead ! rcurr clean f-load drop ;
 
-: deinit  rcurr begin curr-line @ dup linelist-next @ swap free throw dup curr-line ! until ;
+: deinit    rcurr begin curr-line @ dup linelist-next @ swap free throw dup curr-line ! until ;
 
 
 
 ( start-line end-line )
-: p        10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit gclen @ type 10 emit n-line loop ;
+: p         10 emit over addify 1 + swap u+do gcline @ i itos 58 emit 32 emit gclen @ type 10 emit n-line loop ;
 ( print entire file to stdout )
-: ,p       gl p ;
+: ,p        gl p ;
 
 ( INSERTION WORDS SETUP )
 ( c-num -- c-num{!} [checks if c-num is more than the length of the current line, aborts if it is] )
@@ -146,7 +144,7 @@ bfill
 : und0      lat over editnode-textptr @ over linelist-line ! over editnode-len @ over linelist-len ! \ same as dl just with fhead instead
             fhead @ over linelist-next ! fhead ! drop num-lines ++ ; \ set the new line to be in fhead, set its next line to be current fhead
 : unin      dup editnode-linenum @ addify dup editnode-textptr @ over gcline @ swap editnode-textptr !
-            gcline ! dup editnode-len @ over gclen @ swap 1 - editnode-len ! gclen ! drop ;
+            gcline ! dup editnode-len @ over gclen @ 1 - swap editnode-len ! gclen ! drop ;
 : unia      editnode-linenum @ addify gcnext @ gcnext @ linelist-next @ gcnext ! free throw num-lines -- ;
 : undl      dup editnode-linenum @ 1 - addify lat over editnode-textptr @ over linelist-line ! \ allocate new linelist, set text to be stored, also addify prev line
             over editnode-len @ over linelist-len ! gcnext @ over linelist-next ! gcnext ! drop num-lines ++ ;
@@ -177,40 +175,40 @@ bfill
             endcase redid ;
 create newl 1 allot
 10 newl !
-: clearall 0 clear-undo ! unclear initial-mem @ here - allot ;
+: clearall  0 clear-undo ! unclear initial-mem @ here - allot ;
 ( save changes )
-: w       rcurr clean 0 num-lines @ 1 u+do gcline @ gclen @ tuck 1 - fh @
-          write-line throw n-line + loop 0 fh @ resize-file close deinit clearall 0 num-lines ! 0 fhead !  ;
+: w         rcurr clean 0 num-lines @ 1 u+do gcline @ gclen @ tuck 1 - fh @
+            write-line throw n-line + loop 0 fh @ resize-file close deinit clearall 0 num-lines ! 0 fhead !  ;
 
 ( line-num -- c-addr len ) ( copy a line )
-: c       addify gcline @ gclen @ ;
+: c         addify gcline @ gclen @ ;
 
 ( SEARCHING AND REPLACING )
-: no-mat  2dup gcline @ + c@ swap line-buffer + c! 1 + swap 1 + swap ;
+: no-mat    2dup gcline @ + c@ swap line-buffer + c! 1 + swap 1 + swap ;
 
 ( c-addr1 u1 c-addr2 u2 line-num -- [replace string 2 with string 1 on line-num, cannot be called standalone] )
-: sr     bfill dup addify gclen @ { c1 u1 c2 u2 line-num length }
-          0 0 0 begin gcline @ over + u2 c2 u2 compare if no-mat
-          else rot 1 + -rot over line-buffer + c1 swap u1 cmove u2 + swap u1 + swap gclen @ u1 u2 - + gclen ! endif
-          dup length 1 - > until drop drop ;
+: sr        bfill dup addify gclen @ { c1 u1 c2 u2 line-num length }
+            0 0 0 begin gcline @ over + u2 c2 u2 compare if no-mat
+            else rot 1 + -rot over line-buffer + c1 swap u1 cmove u2 + swap u1 + swap gclen @ u1 u2 - + gclen ! endif
+            dup length 1 - > until drop drop ;
 
 ( num-changes u1 u2 )
-: newlen  - * gclen @ + gclen ! ;
+: newlen    - * gclen @ + gclen ! ;
 ( c-addr1 u1 c-addr2 u2 start-line end-line -- [replace string 2 with string 1 on all lines in a range] )
 : srmul     { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr dup if \ If there was a replacement, actually change it
             >r line-buffer gclen @ 1 - r> u2 u1 newlen i in else drop endif loop ;
 
 ( c1 u1 line-num )
-: sc      { c1 u1 line-num } 0 line-num addify begin gcline @ over + u1 c1 u1 compare
-          0= if line-num . dup . 59 emit endif 1 + dup gclen @ 1 - >= until drop ;
+: sc        { c1 u1 line-num } 0 line-num addify begin gcline @ over + u1 c1 u1 compare
+            0= if line-num . dup . 59 emit endif 1 + dup gclen @ 1 - >= until drop ;
 
 ( c1 u1 line-start line-end )
-: scmul 1 + swap u+do 2dup i sc loop drop drop ;
+: scmul     1 + swap u+do 2dup i sc loop drop drop ;
 
-: yay s" yay!" type ;
+: yay       s" yay!" type ;
 create qmark 1 allot 34 qmark !
 ( line-num -- replace [quote] with a quotation mark on line-num )
-: qrep { num } qmark 1 s" quote" num num srmul ;
+: qrep      { num } qmark 1 s" quote" num num srmul ;
 
 ( this needs to be at the end of the file, keeps track of the starting point for allocations so that saving frees everything done since )
 here initial-mem !
