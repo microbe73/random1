@@ -23,11 +23,13 @@ Definition binopDenote := fun b =>
   | Second => snd
   end.
 
-Fixpoint expDenote ( e : exp) : nat :=
+Fixpoint expDenote (e : exp) : nat :=
   match e with
   | Const n => n
   | Binop b e1 e2 => (binopDenote b) (expDenote e1) (expDenote e2)
-  end.
+  end
+.
+
 
 Eval simpl in expDenote (Const 42).
 Eval simpl in expDenote (Binop Plus (Const 2) (Const 3)).
@@ -72,15 +74,20 @@ Eval simpl in progDenote (compile (Binop Times (Binop Second(Const 2) (Const 3))
 
 
 Lemma compile_correct' : forall e p s, progDenote (compile e ++ p) s =
-  progDenote p (expDenote e :: s). induction e. intros. unfold compile. unfold
+  progDenote p (expDenote e :: s). 
+Proof.
+  induction e. intros. unfold compile. unfold
   expDenote. unfold progDenote at 1. simpl. fold progDenote. reflexivity.
   intros. unfold compile. fold compile. unfold expDenote. fold expDenote. rewrite
   app_assoc_reverse. rewrite IHe2. rewrite app_assoc_reverse. rewrite IHe1.
-  unfold progDenote at 1. simpl. fold progDenote. reflexivity. Qed.
+  unfold progDenote at 1. simpl. fold progDenote. reflexivity.
+Qed.
 Lemma nr : forall e, compile e = compile e ++ nil.
+Proof.
 intros. rewrite app_nil_r. reflexivity.
 Qed.
 Theorem compile_correct : forall e, progDenote (compile e) nil = Some (expDenote e :: nil).
+Proof.
 intros. rewrite nr. rewrite compile_correct'. reflexivity.
 Qed.
 
@@ -175,8 +182,41 @@ Fixpoint typecheck (t: term) : option type_term :=
 
 Eval simpl in typecheck (Add (Add (Nat 5) (Nat 7)) (True)).
 
-Theorem type_sound : forall e, (exists a, typecheck e = Some a) -> 
-  (exists b, eval e = Some b).
-Proof.
-  intros. Abort.
+Module ilist_playground.
+Inductive ilist (X : Type) : nat -> Type :=
+| inil : ilist X 0
+| icons (n : nat) (x : X) (l : ilist X n) : ilist X (S n).
 
+Arguments inil {X}.
+Arguments icons {X n}.
+
+Notation "x ::: l" := (icons x l)
+                      (at level 60, right associativity).
+Notation "[[ ]]" := inil.
+Notation "[[ x ; .. ; y ]]" := (icons x .. (icons y inil) ..).
+
+Inductive binop : Set :=
+  Plus | Times.
+
+Inductive exp : Set :=
+  | Const : nat -> exp
+  | Binop : binop -> exp -> exp -> exp.
+
+Definition ihd {X n} (l : ilist X (S n)) : X :=
+  match l with
+  | x ::: l => x
+  end.
+
+Definition adds {n} (l : ilist nat (S (S n))) : ilist nat (S n).
+  intros. inversion l; subst. inversion l0; subst.
+  apply icons. apply (plus x x0). apply l1.
+Defined.
+
+Definition mults {n} (l : ilist nat (S (S n))) : ilist nat (S n).
+  intros. inversion l; subst. inversion l0; subst.
+  apply icons. apply (mult x x0). apply l1.
+Defined.
+
+Compute (mults [[3 ; 4 ; 5 ; 7]]).
+
+End ilist_playground.

@@ -1,9 +1,9 @@
-Fixpoint add (a b : nat) : nat :=
+Require Import List.
+Fixpoint add (a : nat) (b : nat) : nat :=
   match a with
   | 0 => b
   | S n => S (add n b)
   end.
-
 Theorem add_assoc : forall (a b c : nat),
   (add a (add b c)) = (add (add a b) c).
 Proof.
@@ -39,6 +39,7 @@ Proof.
   simpl. induction b. simpl. rewrite add_0. reflexivity.
   simpl. rewrite -> IHa. simpl. rewrite add_S. reflexivity.
 Qed.
+
 
 
 Fixpoint gt (a b : nat) : bool :=
@@ -85,14 +86,24 @@ Proof.
   intros a b. firstorder. induction a. simpl. reflexivity. rewrite H. apply trichotomy_0.
   rewrite H. apply trichotomy_0.
 Qed.
-Theorem trichotomy_2 : forall (a b : nat),
-  gt a b = false -> gt b a = true \/ a = b.
-Proof.
-  intros a b. induction a. firstorder. destruct b. simpl. firstorder. simpl. firstorder.
-  destruct b. simpl. discriminate. simpl.
 
-Theorem gt_transitive : forall (a b c : nat), 
-  gt a b = true /\ gt b c = true -> gt a c = true.
-Proof.
-  intros a b c. firstorder. induction c. destruct a. apply H. 
-  simpl. reflexivity. destruct a. apply H. simpl. induction c. 
+Fixpoint filter {X : Type} (l : list X) (test : X -> bool) : (list X) :=
+  match l with
+  | nil => nil
+  | (x :: rest) => if test x then x :: (filter rest test) else (filter rest test)
+  end.
+Compute (minus 7 5).
+Notation "A $ F" := (F A) (at level 80, right associativity).
+(* kinda technically postfix notation *)
+Compute (5 $ 7 $ plus).
+Compute (7 $ (5 $ 1 $ plus) $ minus).
+ 
+Notation "L ▽ T" := (filter L T) (at level 75, right associativity).
+Definition is_0 (n : nat) : bool :=
+  match n with
+  | 0 => true
+  | _ => false
+  end.
+Notation "[ x ; .. ; y ]" := (cons x .. (cons y nil) ..).
+Compute ([ 0 ; 1 ; 2 ; 0 ; 3 ; 0 ; 1 ] ▽ is_0).
+(*▽*)
