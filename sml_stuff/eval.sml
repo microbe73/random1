@@ -15,7 +15,7 @@ end = struct
                         | (name :: rest1, []) =>
                             raise Fail "More names given than assigned"
                         | ([], vlu :: rest2) =>
-                            raise Fail "More variables set without name"
+                            raise Fail "More variables st without name"
                         | (name :: restnms, vlu :: restvals) =>
                             (A.Let(name, vlu,
                             unmultilet (A.Let(A.List restnms, A.List restvals,

@@ -14,3 +14,5 @@ Cargo.lock
 *.pdb
 # For SML
 .cm/
+# For Python
+.venv/
