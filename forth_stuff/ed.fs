@@ -1,22 +1,24 @@
 ( editor Variables )
 variable fh ( file handler )
-variable curr-line ( struct pointer, @ needed to get struct  )
+variable curr-line ( linelist pointer, @ needed to get struct  )
 variable num-lines ( int pointer )
-variable fhead ( struct pointer )
+variable fhead ( line 1 linelist pointer )
 variable initial-mem
-variable last-edit ( struct pointer )
+variable last-edit ( editnode pointer )
 variable clear-undo ( when performing an edit after an undo, the entire undo list needs to be cleared )
 variable clear-redo ( if a redo is performed, set this so we don't clear the undo list. )
-variable next-redo ( struct pointer )
-256 Constant max-line
-create line-buffer max-line allot
+variable next-redo ( editnode pointer )
+variable curr-buffer ( fhead pointer )
 
+256 Constant max-line
+create line-tmp max-line allot
+\ Goal: add a multiple buffers feature: so you can init two files at once without issue
+\ a curr-buffer variable tracks the current buffer to insert and stuff to
 begin-structure linelist ( -- u )
     field: linelist-next ( intlist -- addr1 ) ( struct pointer )
     field: linelist-line  ( intlist -- addr2 ) ( string pointer [char*[]] )
     field: linelist-len ( intlist -- addr3 ) ( int pointer )
 end-structure
-
 
 
 begin-structure editnode
@@ -28,16 +30,41 @@ begin-structure editnode
 end-structure
 
 
+begin-structure buffer
+    field: buffer-fh ( fh* )
+    field: buffer-fhead ( linelist*, points to start for the buffer )
+    field: buffer-name ( char** )
+    field: buffer-nlen ( int*, length of filename )
+    field: buffer-numlines ( int*, number of lines in the buffer )
+    field: buffer-currline ( linelist*, curr-line for the buffer )
+end-structure
+
 ( clear the undo list [ -- ] )
 : unclear   clear-undo @ if begin
             last-edit @ dup dup while editnode-prevedit @ last-edit ! free throw repeat
             0 clear-undo ! 0 next-redo ! 2drop then ;
-: bfill     max-line 0 u+do line-buffer i + 0 swap ! loop ;
-bfill
+: tfill     max-line 0 u+do line-tmp i + 0 swap ! loop ;
+tfill
 0 num-lines !
 0 last-edit !
 0 next-redo !
 0 clear-undo !
+\ TODO: Replace the original versions of words with the 2 versions it technically should work the same way
+( : crline2 bufget [current buffer pointer is on the stack] buffer-currline ; )
+( : fh2     bufget buffer-fh ; )
+( : fhead2  bufget buffer-fhead ; )
+( : nmlns2  bufget buffer-numlines ; )
+( : bfname  bufget buffer-name @ bufget buffer-nlen @ type ; )
+( BUFFER WORDS )
+create buf-array 5 cells allot
+0 curr-buffer !
+( : buf-get   buf-array curr-buffer @ cells + @ ;
+: buf-cre   buffer allocate throw buf-array curr-buffer @ cells + ! ;
+: curr-line bufget buffer-currline ;
+: fh        bufget buffer-fh ;
+: fhead     bufget buffer-fhead ;
+: num-lines bufget buffer-numlines ;
+: bufname   bufget buffer-name @ bufget buffer-nlen @ type ; )
 ( QOL WORDS )
 ( []  -- linelist-line [ gets pointer to current line's text ] )
 : gcline    curr-line @ linelist-line ;
@@ -77,10 +104,10 @@ bfill
 
 : lat       linelist allocate throw ;
 
-: l-load    { len } align here line-buffer align here len allot len cmove gcline ! len gclen ! ( set values for this line )
+: l-load    { len } align here line-tmp align here len allot len cmove gcline ! len gclen ! ( set values for this line )
             lat gcnext ! gcnext @ curr-line !  nullify ( move pointer to next line, set to 0s to avoid weird bugs ) ;
 
-: f-load    begin bfill line-buffer max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat bfill ;
+: f-load    begin tfill line-tmp max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat tfill ;
 
 ( c-addr u -- [load a file into memory] )
 : init      open lat fhead ! rcurr clean f-load drop ;
@@ -97,12 +124,12 @@ bfill
 ( INSERTION WORDS SETUP )
 ( c-num -- c-num{!} [checks if c-num is more than the length of the current line, aborts if it is] )
 : bound     gclen @ over < if -1 abort" Illegal insertion beyond end of line" endif ;
-( c-num -- c-num [moves the first c characters of the current line into the line buffer] )
-: prein     gcline @ over line-buffer swap cmove ;
-( c-addr u c-num -- u c-num [moves the u characters offset by c places into the line buffer] )
-: newin     dup >r line-buffer + swap dup >r cmove r> r> ;
-( u c-num -- new-len [inserts the last part into the line buffer] )
-: postin    { u c-num } gcline @ c-num + line-buffer c-num u + +
+( c-num -- c-num [moves the first c characters of the current line into the temp line] )
+: prein     gcline @ over line-tmp swap cmove ;
+( c-addr u c-num -- u c-num [moves the u characters offset by c places into the temp line] )
+: newin     dup >r line-tmp + swap dup >r cmove r> r> ;
+( u c-num -- new-len [inserts the last part into the temp line] )
+: postin    { u c-num } gcline @ c-num + line-tmp c-num u + +
             gclen @ c-num - cmove gclen @ u + ;
 ( c-addr u -- new-addr [move an input string into a new address, null-terminate it] )
 : mhere     { len } here len allot tuck len cmove 0 c, ;
@@ -127,7 +154,7 @@ bfill
             len 1 + over linelist-len ! fhead ! num-lines ++ ;
 
 ( c-addr u line-num c-num -- ) ( insert text at a specific character in a line )
-: ic        bfill swap dup >r addify bound prein newin postin line-buffer swap 1 - r> in ;
+: ic        tfill swap dup >r addify bound prein newin postin line-tmp swap 1 - r> in ;
 
 ( DELETION WORDS )
 ( line-num -- )
@@ -184,19 +211,19 @@ create newl 1 allot
 : c         addify gcline @ gclen @ ;
 
 ( SEARCHING AND REPLACING )
-: no-mat    2dup gcline @ + c@ swap line-buffer + c! 1 + swap 1 + swap ;
+: no-mat    2dup gcline @ + c@ swap line-tmp + c! 1 + swap 1 + swap ;
 
 ( c-addr1 u1 c-addr2 u2 line-num -- [replace string 2 with string 1 on line-num, cannot be called standalone] )
-: sr        bfill dup addify gclen @ { c1 u1 c2 u2 line-num length }
+: sr        tfill dup addify gclen @ { c1 u1 c2 u2 line-num length }
             0 0 0 begin gcline @ over + u2 c2 u2 compare if no-mat
-            else rot 1 + -rot over line-buffer + c1 swap u1 cmove u2 + swap u1 + swap gclen @ u1 u2 - + gclen ! endif
+            else rot 1 + -rot over line-tmp + c1 swap u1 cmove u2 + swap u1 + swap gclen @ u1 u2 - + gclen ! endif
             dup length 1 - > until drop drop ;
 
 ( num-changes u1 u2 )
 : newlen    - * gclen @ + gclen ! ;
 ( c-addr1 u1 c-addr2 u2 start-line end-line -- [replace string 2 with string 1 on all lines in a range] )
 : srmul     { c1 u1 c2 u2 l1 l2 } l2 1 + l1 u+do c1 u1 c2 u2 i sr dup if \ If there was a replacement, actually change it
-            >r line-buffer gclen @ 1 - r> u2 u1 newlen i in else drop endif loop ;
+            >r line-tmp gclen @ 1 - r> u2 u1 newlen i in else drop endif loop ;
 
 ( c1 u1 line-num )
 : sc        { c1 u1 line-num } 0 line-num addify begin gcline @ over + u1 c1 u1 compare
