@@ -4,7 +4,6 @@ int add(int a, int b){
   return a + b;
 }
 Cell gforth_main(int argc, char **argv, char **env)
-{
   Cell retvalue=gforth_start(argc, argv);
 
   if(retvalue == -56) { /* throw-code for quit */
@@ -19,6 +18,6 @@ Cell gforth_main(int argc, char **argv, char **env)
   return retvalue;
 }
 int main(){
-
+// just a chill comment
   return 0;
 }

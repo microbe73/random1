@@ -1,19 +1,15 @@
-( editor Variables )
-variable fh ( file handler )
-variable curr-line ( linelist pointer, @ needed to get struct  )
-variable num-lines ( int pointer )
-variable fhead ( line 1 linelist pointer )
+( Editor Variables )
 variable initial-mem
 variable last-edit ( editnode pointer )
 variable clear-undo ( when performing an edit after an undo, the entire undo list needs to be cleared )
 variable clear-redo ( if a redo is performed, set this so we don't clear the undo list. )
 variable next-redo ( editnode pointer )
 variable curr-buffer ( fhead pointer )
+variable cline-num
 
 256 Constant max-line
 create line-tmp max-line allot
-\ Goal: add a multiple buffers feature: so you can init two files at once without issue
-\ a curr-buffer variable tracks the current buffer to insert and stuff to
+
 begin-structure linelist ( -- u )
     field: linelist-next ( intlist -- addr1 ) ( struct pointer )
     field: linelist-line  ( intlist -- addr2 ) ( string pointer [char*[]] )
@@ -30,61 +26,61 @@ begin-structure editnode
 end-structure
 
 
-begin-structure buffer
-    field: buffer-fh ( fh* )
-    field: buffer-fhead ( linelist*, points to start for the buffer )
-    field: buffer-name ( char** )
-    field: buffer-nlen ( int*, length of filename )
-    field: buffer-numlines ( int*, number of lines in the buffer )
-    field: buffer-currline ( linelist*, curr-line for the buffer )
+begin-structure textbuffer
+    field: textbuffer-fh ( fh* )
+    field: textbuffer-fhead ( linelist*, points to start for the buffer )
+    field: textbuffer-numlines ( int*, number of lines in the buffer )
+    field: textbuffer-currline ( linelist*, curr-line for the buffer )
+    field: textbuffer-name ( char** )
+    field: textbuffer-nlen ( int*, length of filename )
 end-structure
+
+( TODO: Add some words to insert at the current line and stuff [assuming buffer stuff works] )
 
 ( clear the undo list [ -- ] )
 : unclear   clear-undo @ if begin
             last-edit @ dup dup while editnode-prevedit @ last-edit ! free throw repeat
             0 clear-undo ! 0 next-redo ! 2drop then ;
 : tfill     max-line 0 u+do line-tmp i + 0 swap ! loop ;
+
+( zeroing things to avoid unused memory bugs )
 tfill
-0 num-lines !
 0 last-edit !
 0 next-redo !
 0 clear-undo !
-\ TODO: Replace the original versions of words with the 2 versions it technically should work the same way
-( : crline2 bufget [current buffer pointer is on the stack] buffer-currline ; )
-( : fh2     bufget buffer-fh ; )
-( : fhead2  bufget buffer-fhead ; )
-( : nmlns2  bufget buffer-numlines ; )
-( : bfname  bufget buffer-name @ bufget buffer-nlen @ type ; )
+1 cline-num !
 ( BUFFER WORDS )
 create buf-array 5 cells allot
 0 curr-buffer !
-( : buf-get   buf-array curr-buffer @ cells + @ ;
-: buf-cre   buffer allocate throw buf-array curr-buffer @ cells + ! ;
-: curr-line bufget buffer-currline ;
-: fh        bufget buffer-fh ;
-: fhead     bufget buffer-fhead ;
-: num-lines bufget buffer-numlines ;
-: bufname   bufget buffer-name @ bufget buffer-nlen @ type ; )
+: bufget    buf-array curr-buffer @ cells + @ ;
+: buf-cre   textbuffer allocate throw buf-array curr-buffer @ cells + ! ;
+: curr-line bufget textbuffer-currline ;
+: fh        bufget textbuffer-fh ;
+: fhead     bufget textbuffer-fhead ;
+: num-lines bufget textbuffer-numlines ;
+: bufname   bufget textbuffer-name @ bufget textbuffer-nlen @ type ;
+
+
 ( QOL WORDS )
 ( []  -- linelist-line [ gets pointer to current line's text ] )
 : gcline    curr-line @ linelist-line ;
 : gclen     curr-line @ linelist-len ;
 : gcnext    curr-line @ linelist-next ;
 
+( ptr -- [increase/decrease the value pointed to by 1] )
+: ++        dup @ 1 + swap ! ;
+: --        dup @ 1 - swap ! ;
+: gl        1 num-lines @ 1 - ;
 ( set curr-line back to start )
 : rcurr     fhead @ curr-line ! ;
 ( -- [sets curr-line's fields to 0] )
 : nullify   0 gcline ! 0 gclen ! 0 gcnext ! ;
 ( sets curr-line to the next line )
-: n-line    curr-line @ linelist-next @ curr-line ! ;
+: n-line    curr-line @ linelist-next @ curr-line ! cline-num ++ ;
 
 ( line-num -- [sets curr-line to the addressed line] )
-: addify    rcurr 1 u+do n-line loop ;
+: addify    dup cline-num ! rcurr 1 u+do n-line loop ;
 
-( ptr -- [increase/decrease the value pointed to by 1] )
-: ++        dup @ 1 + swap ! ;
-: --        dup @ 1 - swap ! ;
-: gl        1 num-lines @ 1 - ;
 
 : itoa      48 + emit ;
 : get-dig   0 swap begin 10 / swap 1 + swap dup 0= until drop ;
@@ -110,7 +106,7 @@ create buf-array 5 cells allot
 : f-load    begin tfill line-tmp max-line fh @ read-line throw num-lines ++ while 1 + l-load repeat tfill ;
 
 ( c-addr u -- [load a file into memory] )
-: init      open lat fhead ! rcurr clean f-load drop ;
+: init      buf-cre 0 num-lines ! open lat fhead ! rcurr clean f-load drop ;
 
 : deinit    rcurr begin curr-line @ dup linelist-next @ swap free throw dup curr-line ! until ;
 
@@ -143,18 +139,28 @@ create buf-array 5 cells allot
             editnode-len ! rot tuck over editnode-textptr ! last-edit @ over editnode-prevedit !
             last-edit ! swap ;
 ( INSERTION WORDS )
-( c-addr u line-num -- ) ( replace line with other text )
-: in        dup addify 3 usetup { len } len mhere gcline ! len 1 + gclen ! ;
-
-: ia        dup addify 4 uisetup { len } len mhere lat gcnext @ over gcnext ! over linelist-next ! len 1 + over
+: ingen     3 usetup { len } len mhere gcline ! len 1 + gclen ! ;
+: iagen     4 uisetup { len } len mhere lat gcnext @ over gcnext ! over linelist-next ! len 1 + over
             linelist-len ! linelist-line ! num-lines ++ ;
+( c-addr u line-num -- ) ( replace line with other text )
+: inln      dup addify ingen ;
+
+: ialn      dup addify iagen ;
 
 ( c-addr u ) ( insert text before the first line )
 : i0        rcurr 1 1 uisetup { len } len mhere lat tuck linelist-line ! fhead @ over linelist-next !
             len 1 + over linelist-len ! fhead ! num-lines ++ ;
 
 ( c-addr u line-num c-num -- ) ( insert text at a specific character in a line )
-: ic        tfill swap dup >r addify bound prein newin postin line-tmp swap 1 - r> in ;
+: icln      tfill swap dup >r addify bound prein newin postin line-tmp swap 1 - r> in ;
+
+( c-addr u ) ( insert text in the current line )
+: in        cline-num @ ingen ;
+: ia        cline-num @ iagen ;
+
+( c-addr u c-num )
+: iccur     tfill bound prein newin postin line-tmp swap 1 - in ;
+
 
 ( DELETION WORDS )
 ( line-num -- )
@@ -205,7 +211,7 @@ create newl 1 allot
 : clearall  0 clear-undo ! unclear initial-mem @ here - allot ;
 ( save changes )
 : w         rcurr clean 0 num-lines @ 1 u+do gcline @ gclen @ tuck 1 - fh @
-            write-line throw n-line + loop 0 fh @ resize-file close deinit clearall 0 num-lines ! 0 fhead !  ;
+            write-line throw n-line + loop 0 fh @ resize-file close deinit 0 num-lines ! 0 fhead !  ;
 
 ( line-num -- c-addr len ) ( copy a line )
 : c         addify gcline @ gclen @ ;

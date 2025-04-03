@@ -65,9 +65,8 @@ void printt(struct textnode t){
     printf("String: %s", t.str);
     printf("Score: %d\n", t.score);
 }
-int main(int argc, char** argv){
-    FILE* f = fopen("test.txt", "r");
-    int max_matches = 10;
+void match_on(char* match_with, char* fname, int max_matches){
+    FILE* f = fopen(fname, "r");
     char buffer[256];
     struct textnode matched[max_matches];
     int num_matches = 0;
@@ -76,20 +75,39 @@ int main(int argc, char** argv){
         if (test_str == 0){
             break;
         }
-        char match_with[] = "foo\\d";
         struct textnode t = check_match(match_with, buffer, strlen(match_with),
                                         strlen(buffer));
         if (t.score != MAX_SCORE){
             matched[num_matches] = t;
             num_matches++;
         };
+        if (num_matches == max_matches){
+            break;
+        }
     }
-    printf("Total matches found: %d\n", num_matches);
     qsort(matched, num_matches, sizeof(struct textnode), comp_score);
-
+    printf("Total matches found: %d\n", num_matches);
     for(int i = 0; i < num_matches; i++){
         printt(matched[i]);
         printf("\n");
         free(matched[i].str);
     }
+    fclose(f);
+}
+int main(int argc, char** argv){
+    switch (argc) {
+        case 1:
+            printf("No pattern given");
+            return 1;
+        case 2:
+            match_on(argv[1], "test.txt", 10);
+            break;
+        case 3:
+            match_on(argv[1], argv[2], 10);
+            break;
+        default:
+            match_on(argv[1], argv[2], atoi(argv[3]));
+            break;
+    }
+    return 0;
 }
